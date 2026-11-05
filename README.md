@@ -11,6 +11,15 @@ It is a portfolio project showing ETL, feature engineering with an explicit leak
 
 **The question it answers (v0.2): which recorded patient characteristics are *associated* with having diabetes in this synthetic cohort.** It is not a risk-prediction model (see Known limits).
 
+**New here? Start with the [practitioner's guide](GUIDE.md)** (formatted version: [`docs/index.html`](docs/index.html), also on this repo's GitHub Pages site). It walks from a first run to a frozen model tested on new data, lists every setting you can change, and shows how to adapt the pipeline to Singapore data, other datasets and other diseases.
+
+| Folder | What |
+|---|---|
+| `pipeline/` | The pipeline: load → clean → features → label → quality → model |
+| `toolkit/` | Charts, many-seed runs, a frozen JSON model, scoring + local recalibration on new data |
+| `tests/` | 81 tests (76 pipeline + 5 toolkit) |
+| `docs/` | The HTML guide and the script that builds it from `GUIDE.md` |
+
 ## What it does
 
 | Step | Module | What happens |
@@ -123,7 +132,7 @@ Odds ratio per standard deviation (model fitted on the development set): `age` 2
 
 **Version history on the same cohort.** v0 (label `<<73211009` only, 11 inputs): test AUROC 0.6648. v0.1 (label + 6 complication codes, 11 inputs): test AUROC 0.9426, largest coefficient `enc_ambulatory`. v0.2 (same label, 7 inputs, dev/test protocol): test AUROC 0.9144. The drop from v0.1 to v0.2 is the part of the signal that came from post-diagnosis care.
 
-**Tests:** 76 pytest tests, all passing (`python -m pytest`).
+**Tests:** 81 pytest tests, all passing (`python -m pytest`) with `requirements-toolkit.txt` installed. With only `requirements.txt`, the 76 pipeline tests run and the toolkit tests are skipped.
 
 ## Known limits
 
@@ -134,6 +143,19 @@ Odds ratio per standard deviation (model fitted on the development set): `age` 2
 - **Prediabetes is common.** 441 patients have Prediabetes `714628002`; it is never a feature or a label.
 - **Allowlisted code absent.** `13644009` Hypercholesterolemia does not occur in this cohort; `302870006` Hypertriglyceridemia does (86 patients) but is not on the allowlist.
 - **Small, single evaluation.** One development / test split; no confidence intervals on test metrics; no formal sample-size calculation (e.g. Riley et al. 2020); no hyperparameter tuning; one model.
+
+## Toolkit (v0.3)
+
+Optional extras in `toolkit/` (`pip install -r requirements-toolkit.txt`); outputs go to `runs/`, `models/` and `data/cohorts/`, which git ignores. Details and commands in the [guide](GUIDE.md).
+
+| Script | Does |
+|---|---|
+| `make_plots.py` | ROC/PR, calibration, decision curve, odds ratios, feature distributions, prevalence; one HTML page |
+| `multi_seed.py` | Re-runs the protocol over N split seeds or N new Synthea cohorts; optional recalibration; summary of the spread |
+| `train_final.py` | Trains one model and saves it as plain JSON (no pickle); checks the JSON reproduces scikit-learn exactly |
+| `predict.py` | Scores any cohort with a frozen model; with outcomes, an external validation; `--local-recal` learns a new calibration on part of the new data and checks it on the rest |
+
+First external check (frozen model trained on the published cohort, scored on a new 2,322-patient Synthea cohort): AUROC 0.888; calibration slope 0.81 raw → 0.93 after local recalibration on half the new cohort, checked on the other half.
 
 ## Later
 

@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practitioner's guide · synthea-ehr-pipeline</title>
+<meta name="description" content="How to run, understand, change and extend a tested EHR modelling pipeline on synthetic data.">
+<style>
+:root{
+  --bg:#fbfbf9;--panel:#f2f3ef;--ink:#1c2230;--muted:#5a6272;--line:#dcdfd8;--line-strong:#8b929e;
+  --accent:#0f766e;--accent-weak:#e3f2ef;--code-bg:#f2f3ef;--warn:#9a3412;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111419;--panel:#191d24;--ink:#e6e8ec;--muted:#a1a8b4;--line:#2a3039;--line-strong:#7b8390;
+  --accent:#4fd1c5;--accent-weak:rgba(79,209,197,.13);--code-bg:#191d24;--warn:#fdba74;}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+header.hero{border-bottom:1px solid var(--line);background:var(--panel)}
+.hero-in{max-width:1120px;margin:0 auto;padding:44px 24px 34px}
+.eyebrow{font:600 13px/1 var(--mono);letter-spacing:.04em;color:var(--accent);text-transform:uppercase}
+h1{font-size:clamp(30px,4.2vw,42px);line-height:1.15;margin:12px 0 10px;letter-spacing:-.01em}
+.lede{font-size:19px;color:var(--muted);max-width:680px;margin:0}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;padding:0;list-style:none}
+.pills li{font:600 13px/1 var(--sans);padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--bg)}
+.pills li.warn{color:var(--warn)}
+.actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;font:600 15px/1 var(--sans);padding:11px 16px;border-radius:8px;border:1px solid var(--accent);text-decoration:none}
+.btn.primary{background:var(--accent);color:var(--bg)}
+.layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:32px 0}
+nav.toc p{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px}
+nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+nav.toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:14.5px;line-height:1.35}
+nav.toc a:hover{color:var(--ink)}
+nav.toc a.on{color:var(--ink);border-left-color:var(--accent);font-weight:600}
+main{min-width:0;max-width:780px;padding:20px 0 80px}
+h2{font-size:26px;line-height:1.25;margin:56px 0 14px;padding-top:28px;border-top:1px solid var(--line);letter-spacing:-.005em}
+main>h2:first-child{border-top:0;margin-top:12px}
+h3{font-size:19px;margin:30px 0 8px}
+p,ul,ol{margin:0 0 16px}
+li{margin:4px 0}
+strong{font-weight:650}
+hr{display:none}
+code{font:0.88em var(--mono);background:var(--code-bg);padding:2px 5px;border-radius:5px;border:1px solid var(--line)}
+pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;margin:0 0 20px}
+pre code{background:none;border:0;padding:0;font-size:14px;line-height:1.6}
+.copy{position:absolute;top:8px;right:8px;font:600 12px/1 var(--sans);padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--muted);cursor:pointer}
+.copy:hover{color:var(--ink)}
+.table-wrap{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{background:var(--panel);font-weight:650;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+blockquote.callout{margin:0 0 22px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-weak);border-radius:0 10px 10px 0}
+blockquote.callout p{margin:0}
+p.senior{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:15.5px;color:var(--muted)}
+p.senior strong:first-child{color:var(--ink);display:block;font:600 12px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+li.task{list-style:none;margin-left:-22px;display:flex;gap:10px;align-items:flex-start}
+li.task .box{flex:0 0 16px;height:16px;margin-top:5px;border:1.5px solid var(--line-strong);border-radius:4px}
+figure.fig{margin:8px 0 26px;padding:18px 16px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+figure.fig svg{display:block;width:100%;height:auto}
+figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+.s-title{font:600 15px var(--sans);fill:var(--ink)}
+.s-box{fill:none;stroke:var(--line-strong);stroke-width:1.25}
+.s-accent{fill:var(--accent-weak);stroke:var(--accent);stroke-width:2}
+.s-zone{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.s-zone-label{font:600 12px var(--mono);fill:var(--muted)}
+.s-lines{fill:none;stroke:var(--line-strong);stroke-width:1.25}
+.s-dash{stroke-dasharray:4 4}
+.s-head{fill:var(--line-strong)}
+.s-k{font:600 11px var(--mono);fill:var(--muted);text-anchor:middle}
+.s-n{font:600 13px var(--sans);fill:var(--ink);text-anchor:middle}
+.s-n2{font:13px var(--sans);fill:var(--ink);text-anchor:middle}
+.s-sub{font:11.5px var(--sans);fill:var(--muted);text-anchor:middle}
+.s-left{text-anchor:start}
+.s-ink{fill:var(--ink)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer div{max-width:1120px;margin:0 auto;padding:22px 24px}
+details.toc-mobile{display:none}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:0;padding:0 16px}
+  nav.toc{display:none}
+  details.toc-mobile{display:block;margin:16px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  details.toc-mobile summary{cursor:pointer;padding:12px 14px;font-weight:600}
+  details.toc-mobile ol{margin:0;padding:0 14px 12px 34px}
+  .hero-in{padding:32px 16px 26px}
+  body{font-size:16px}
+  h2{font-size:23px}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in">
+  <div class="eyebrow">synthea-ehr-pipeline · practitioner's guide</div>
+  <h1>From first run to a model you can move to new data</h1>
+  <p class="lede">How to run, understand, change and extend a tested EHR modelling pipeline. Written for a first-year data scientist, with notes for seniors on the judgement calls.</p>
+  <ul class="pills"><li class="warn">Synthetic data only · not clinical</li><li>Association, not prediction</li><li>81 tests</li><li>v0.2</li></ul>
+  <div class="actions"><a class="btn primary" id="repo-link" href="../">View the code</a><a class="btn" href="#quick-start">Quick start</a></div>
+</div></header>
+<div class="layout">
+  <nav class="toc" aria-label="Contents"><p>Contents</p><ol>
+<li><a href="#in-60-seconds">In 60 seconds</a></li>
+<li><a href="#quick-start">Quick start</a></li>
+<li><a href="#1-the-map">1. The map</a></li>
+<li><a href="#2-change-one-thing-at-a-time">2. Change one thing at a time</a></li>
+<li><a href="#3-settings-you-can-change">3. Settings you can change</a></li>
+<li><a href="#4-splits-folds-and-seeds">4. Splits, folds and seeds</a></li>
+<li><a href="#5-other-models-and-features">5. Other models and features</a></li>
+<li><a href="#6-calibration-recalibration-and-thresholds">6. Calibration, recalibration and thresholds</a></li>
+<li><a href="#7-freeze-a-model-and-test-it-on-new-data">7. Freeze a model and test it on new data</a></li>
+<li><a href="#8-adapting-it-singapore-other-data-other-diseases-policy">8. Adapting it: Singapore, other data, other diseases, policy</a></li>
+<li><a href="#9-reading-the-outputs">9. Reading the outputs</a></li>
+<li><a href="#10-common-mistakes-and-a-checklist">10. Common mistakes and a checklist</a></li>
+<li><a href="#sources">Sources</a></li>
+  </ol></nav>
+  <main>
+    <details class="toc-mobile"><summary>Contents</summary><ol>
+<li><a href="#in-60-seconds">In 60 seconds</a></li>
+<li><a href="#quick-start">Quick start</a></li>
+<li><a href="#1-the-map">1. The map</a></li>
+<li><a href="#2-change-one-thing-at-a-time">2. Change one thing at a time</a></li>
+<li><a href="#3-settings-you-can-change">3. Settings you can change</a></li>
+<li><a href="#4-splits-folds-and-seeds">4. Splits, folds and seeds</a></li>
+<li><a href="#5-other-models-and-features">5. Other models and features</a></li>
+<li><a href="#6-calibration-recalibration-and-thresholds">6. Calibration, recalibration and thresholds</a></li>
+<li><a href="#7-freeze-a-model-and-test-it-on-new-data">7. Freeze a model and test it on new data</a></li>
+<li><a href="#8-adapting-it-singapore-other-data-other-diseases-policy">8. Adapting it: Singapore, other data, other diseases, policy</a></li>
+<li><a href="#9-reading-the-outputs">9. Reading the outputs</a></li>
+<li><a href="#10-common-mistakes-and-a-checklist">10. Common mistakes and a checklist</a></li>
+<li><a href="#sources">Sources</a></li>
+    </ol></details>
+<blockquote class="callout">
+<p><strong>Synthetic data only. Not clinical.</strong> The question the model answers is which recorded patient characteristics are <em>associated</em> with having diabetes in a synthetic cohort. It is not a risk-prediction model.</p>
+</blockquote>
+<hr />
+<h2 id="in-60-seconds">In 60 seconds</h2>
+<div class="table-wrap"><table>
+
+<tbody>
+<tr>
+<td><strong>What it is</strong></td>
+<td>A tested pipeline: raw EHR-style CSVs → one row per patient → data-quality report → logistic regression with honest evaluation</td>
+</tr>
+<tr>
+<td><strong>What you can do with it</strong></td>
+<td>Reproduce, change features or models safely, test robustness across seeds, freeze a model, score new data, recalibrate it for a new site</td>
+</tr>
+<tr>
+<td><strong>What it is not</strong></td>
+<td>Clinical evidence, a Singapore model, or a prediction model (yet)</td>
+</tr>
+<tr>
+<td><strong>Time to first result</strong></td>
+<td>About 15 minutes</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="quick-start">Quick start</h2>
+<pre><code class="language-bash">python -m venv .venv
+.venv\Scripts\activate                   # macOS/Linux: source .venv/bin/activate
+pip install -r requirements-toolkit.txt  # pipeline + charts
+python -m pytest -q                      # expect 81 passed
+powershell -File scripts/generate_data.ps1   # macOS/Linux: bash scripts/generate_data.sh
+python -m pipeline --raw data/raw/csv --out runs/baseline
+python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
+</code></pre>
+<p>You need Python 3.12+ and, for data generation only, Java 17+. The pipeline should print <code>test AUROC=0.9144 AUPRC=0.6088 Brier=0.084 threshold=0.2472</code>. If it does not, stop and find out why before changing anything.</p>
+<p>Everything you generate goes into <code>runs/</code>, <code>models/</code> or <code>data/cohorts/</code>. Git ignores those folders, so experiments never end up in a commit by accident.</p>
+<hr />
+<h2 id="1-the-map">1. The map</h2>
+<figure class="fig"><svg viewBox="0 0 760 292" role="img" aria-label="One command runs phases B to G; the toolkit adds H to J">
+<defs><marker id="m-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-head"/></marker></defs>
+<text x="16" y="24" class="s-title">One command runs B to G; the toolkit adds H to J</text>
+<rect x="120" y="44" width="624" height="92" rx="10" class="s-zone"/>
+<text x="134" y="63" class="s-zone-label">python -m pipeline</text>
+<rect x="120" y="176" width="624" height="92" rx="10" class="s-zone"/>
+<text x="134" y="195" class="s-zone-label">toolkit/</text>
+<g class="s-lines">
+<path d="M104 96H136" marker-end="url(#m-arrow)"/>
+<path d="M226 96H236" marker-end="url(#m-arrow)"/><path d="M326 96H336" marker-end="url(#m-arrow)"/>
+<path d="M426 96H436" marker-end="url(#m-arrow)"/><path d="M526 96H536" marker-end="url(#m-arrow)"/>
+<path d="M626 96H636" marker-end="url(#m-arrow)"/>
+<path d="M682 120V202" marker-end="url(#m-arrow)"/>
+<path d="M324 228H337" marker-end="url(#m-arrow)"/><path d="M525 228H538" marker-end="url(#m-arrow)"/>
+</g>
+<g><rect x="16" y="72" width="88" height="48" rx="8" class="s-box"/><text x="60" y="91" class="s-k">A</text><text x="60" y="108" class="s-n">Generate</text></g>
+<g><rect x="138" y="72" width="88" height="48" rx="8" class="s-box"/><text x="182" y="91" class="s-k">B</text><text x="182" y="108" class="s-n">Load</text></g>
+<g><rect x="238" y="72" width="88" height="48" rx="8" class="s-box"/><text x="282" y="91" class="s-k">C</text><text x="282" y="108" class="s-n">Clean</text></g>
+<g><rect x="338" y="72" width="88" height="48" rx="8" class="s-box"/><text x="382" y="91" class="s-k">D</text><text x="382" y="108" class="s-n">Features</text></g>
+<g><rect x="438" y="72" width="88" height="48" rx="8" class="s-box"/><text x="482" y="91" class="s-k">E</text><text x="482" y="108" class="s-n">Label</text></g>
+<g><rect x="538" y="72" width="88" height="48" rx="8" class="s-box"/><text x="582" y="91" class="s-k">F</text><text x="582" y="108" class="s-n">Quality</text></g>
+<g><rect x="638" y="72" width="88" height="48" rx="8" class="s-accent"/><text x="682" y="91" class="s-k">G</text><text x="682" y="108" class="s-n">Model</text></g>
+<g><rect x="138" y="204" width="186" height="48" rx="8" class="s-box"/><text x="231" y="223" class="s-n">H · Look</text><text x="231" y="240" class="s-sub">6 charts + HTML page</text></g>
+<g><rect x="339" y="204" width="186" height="48" rx="8" class="s-box"/><text x="432" y="223" class="s-n">I · Robustness</text><text x="432" y="240" class="s-sub">many seeds, read the spread</text></g>
+<g><rect x="540" y="204" width="186" height="48" rx="8" class="s-box"/><text x="633" y="223" class="s-n">J · Freeze &amp; deploy</text><text x="633" y="240" class="s-sub">score new data, recalibrate</text></g>
+<text x="60" y="140" class="s-sub">Synthea, once</text>
+</svg><figcaption>Phases A to J. Data generation runs once; experiments repeat B to J.</figcaption></figure>
+
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>What happens</th>
+<th>Where</th>
+<th>What you can change</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A. Generate</td>
+<td>Synthea simulates patients and writes CSVs</td>
+<td><code>scripts/generate_data.*</code></td>
+<td>Population, seeds, dates, place</td>
+<td>Rows in <code>patients.csv</code></td>
+</tr>
+<tr>
+<td>B. Load</td>
+<td>Reads 5 tables, only the columns used; clear error if anything is missing</td>
+<td><code>pipeline/load.py</code></td>
+<td>Add a column if a new feature needs it</td>
+<td>Error names the file and column</td>
+</tr>
+<tr>
+<td>C. Clean</td>
+<td>Trims text, parses dates, drops duplicates and rows without a patient ID, sorts patients</td>
+<td><code>pipeline/clean.py</code></td>
+<td>Cleaning rules</td>
+<td>Row counts per step in <code>dq_report.md</code></td>
+</tr>
+<tr>
+<td>D. Features</td>
+<td>11 columns per patient, read through an allowlist; 7 go into the model</td>
+<td><code>pipeline/features.py</code></td>
+<td><code>MODEL_FEATURES</code>, allowlists, new features</td>
+<td>Leakage tests still pass</td>
+</tr>
+<tr>
+<td>E. Label</td>
+<td>diabetes = 1 if any of 124 SNOMED CT codes is recorded</td>
+<td><code>pipeline/label.py</code>, <code>pipeline/data/*.csv</code></td>
+<td>Code lists</td>
+<td>"Codes outside the label" in <code>dq_report.md</code></td>
+</tr>
+<tr>
+<td>F. Quality</td>
+<td>Missing %, min/max, codes found and not found, excluded drugs</td>
+<td><code>pipeline/quality.py</code></td>
+<td>What is reported</td>
+<td>Anything implausible (age 110, systolic BP 42)</td>
+</tr>
+<tr>
+<td>G. Model</td>
+<td>80/20 split, 5-fold CV on development, threshold, final fit, test set used once</td>
+<td><code>pipeline/model.py</code></td>
+<td>Split %, folds, seed, model, threshold rule</td>
+<td><code>metrics.json</code></td>
+</tr>
+<tr>
+<td>H. Look</td>
+<td>Six charts and an HTML page</td>
+<td><code>toolkit/make_plots.py</code></td>
+<td>Which charts</td>
+<td>Calibration and ROC shape</td>
+</tr>
+<tr>
+<td>I. Robustness</td>
+<td>Same recipe over many splits or new cohorts</td>
+<td><code>toolkit/multi_seed.py</code></td>
+<td>Seeds, mode, recalibration</td>
+<td>The spread, not one number</td>
+</tr>
+<tr>
+<td>J. Freeze + deploy</td>
+<td>Save one model as JSON; score new data; recalibrate on the new site</td>
+<td><code>toolkit/train_final.py</code>, <code>toolkit/predict.py</code></td>
+<td>Recalibration share and seed</td>
+<td>External AUROC and calibration</td>
+</tr>
+</tbody>
+</table></div>
+<p class="senior"><strong>Senior notes.</strong> Phases B to F are deterministic: the same CSVs give identical outputs. Only phase G uses randomness, fixed by one seed.</p>
+<hr />
+<h2 id="2-change-one-thing-at-a-time">2. Change one thing at a time</h2>
+<p>Change one thing on a branch, judge it on development data across many splits, and never use the test set to decide.</p>
+<figure class="fig"><svg viewBox="0 0 760 300" role="img" aria-label="Only a change that beats the seed spread moves on to the one-time test">
+<defs><marker id="l-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-head"/></marker></defs>
+<text x="16" y="24" class="s-title">Only a change that beats the seed spread moves on to the one-time test</text>
+<g class="s-lines">
+<path d="M168 130H202" marker-end="url(#l-arrow)"/><path d="M358 130H392" marker-end="url(#l-arrow)"/>
+<path d="M548 130H586" marker-end="url(#l-arrow)"/>
+<path d="M650 90V64H280V106" marker-end="url(#l-arrow)"/>
+<path d="M650 170V236" marker-end="url(#l-arrow)"/>
+<path d="M565 260H525" marker-end="url(#l-arrow)"/><path d="M375 260H335" marker-end="url(#l-arrow)"/><path d="M185 260H165" marker-end="url(#l-arrow)"/>
+<path d="M450 236V196H330V154" class="s-dash" marker-end="url(#l-arrow)"/>
+</g>
+<g><rect x="12" y="106" width="156" height="48" rx="8" class="s-box"/><text x="90" y="127" class="s-n">Reproduce</text><text x="90" y="143" class="s-sub">baseline AUROC 0.9144</text></g>
+<g><rect x="202" y="106" width="156" height="48" rx="8" class="s-box"/><text x="280" y="127" class="s-n">Change one thing</text><text x="280" y="143" class="s-sub">on a branch, run pytest</text></g>
+<g><rect x="392" y="106" width="156" height="48" rx="8" class="s-box"/><text x="470" y="127" class="s-n">Compare on dev</text><text x="470" y="143" class="s-sub">10 split seeds, mean ± SD</text></g>
+<g><polygon points="586,130 650,90 714,130 650,170" class="s-box"/><text x="650" y="127" class="s-n2">Beats the</text><text x="650" y="143" class="s-n2">spread?</text></g>
+<g><rect x="565" y="236" width="150" height="48" rx="8" class="s-accent"/><text x="640" y="257" class="s-n">Lock recipe</text><text x="640" y="273" class="s-sub s-ink">use test set once</text></g>
+<g><rect x="375" y="236" width="150" height="48" rx="8" class="s-box"/><text x="450" y="257" class="s-n">Freeze model</text><text x="450" y="273" class="s-sub">score new data</text></g>
+<g><rect x="185" y="236" width="150" height="48" rx="8" class="s-box"/><text x="260" y="257" class="s-n">Recalibrate</text><text x="260" y="273" class="s-sub">locally, if needed</text></g>
+<g><rect x="15" y="236" width="150" height="48" rx="8" class="s-box"/><text x="90" y="257" class="s-n">Report</text><text x="90" y="273" class="s-sub">with known limits</text></g>
+<text x="465" y="56" class="s-sub">no: revert, log, try the next idea</text>
+<text x="660" y="206" class="s-sub s-left">yes</text>
+<text x="342" y="184" class="s-sub s-left">new data shows a problem</text>
+</svg><figcaption>The experiment loop. Most time is spent in the top row.</figcaption></figure>
+<ol>
+<li><strong>Branch:</strong> <code>git switch -c exp/age-spline</code></li>
+<li><strong>Change one thing:</strong> a label list, a feature, a model setting or a split setting (section 3).</li>
+<li><strong>Test:</strong> <code>python -m pytest -q</code>. Leakage tests must still pass. Tests built around a locked value (such as the model-input list) fail by design; update them only for a deliberate change.</li>
+<li><strong>Compare on development data:</strong> <code>python toolkit/multi_seed.py --mode split --n-seeds 10</code>. Read <code>dev_cv_auroc</code> and <code>cal_slope</code> as mean ± SD.</li>
+<li><strong>Decide:</strong> keep it only if it beats the baseline by more than the seed-to-seed spread. Otherwise <code>git restore .</code> and <code>git switch main</code>.</li>
+<li><strong>Log it:</strong> branch, change, mean ± SD before and after, kept or dropped.</li>
+</ol>
+<p><strong>Rules that keep it honest</strong></p>
+<ul>
+<li>The <code>test_*</code> numbers in <code>metrics.json</code> are for the very end. Choosing versions by test AUROC turns the test set into a second development set.</li>
+<li>Every new feature goes through the allowlist and gets a leakage test. Ask: <em>is this known before the outcome?</em></li>
+<li>A new package means <code>requirements.txt</code>, <code>pip-audit</code> and a security check again.</li>
+</ul>
+<p class="senior"><strong>Senior notes.</strong> Ten splits of the same patients share most of their data, so their spread understates the real uncertainty. Cohort mode (new patients) or bootstrap intervals (not built) give a firmer answer.</p>
+<hr />
+<h2 id="3-settings-you-can-change">3. Settings you can change</h2>
+<p><strong>Data generation</strong> (Synthea flags inside <code>scripts/generate_data.*</code>, or run <code>java -jar tools/synthea-with-dependencies.jar ...</code> yourself)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-p</code> population</td>
+<td>1000 (1,146 rows incl. deceased)</td>
+<td>Bigger = steadier estimates, longer run</td>
+</tr>
+<tr>
+<td><code>-s</code> / <code>-cs</code> seeds</td>
+<td>42 / 42</td>
+<td>A new seed = a new synthetic population</td>
+</tr>
+<tr>
+<td><code>-r</code> / <code>-e</code> dates</td>
+<td>20261101</td>
+<td>Fix the simulation clock; keep fixed</td>
+</tr>
+<tr>
+<td><code>-g</code>, <code>-a 40-70</code></td>
+<td>none</td>
+<td>Restrict sex or age range</td>
+</tr>
+<tr>
+<td>state, city</td>
+<td>Massachusetts</td>
+<td>US places only</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Pipeline code</strong> (change on a branch)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File: setting</th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model.py</code>: <code>RANDOM_STATE</code></td>
+<td>42</td>
+<td>Which patients are in development vs test</td>
+</tr>
+<tr>
+<td><code>model.py</code>: <code>TEST_SIZE</code></td>
+<td>0.2</td>
+<td>Share kept for the final test (section 4)</td>
+</tr>
+<tr>
+<td><code>model.py</code>: <code>CV_FOLDS</code></td>
+<td>5</td>
+<td>Folds inside the development set</td>
+</tr>
+<tr>
+<td><code>model.py</code>: <code>make_model()</code></td>
+<td>median impute → scale → logistic regression</td>
+<td>The model (section 5)</td>
+</tr>
+<tr>
+<td><code>model.py</code>: <code>choose_threshold()</code></td>
+<td>Youden's J</td>
+<td>Threshold rule (section 6)</td>
+</tr>
+<tr>
+<td><code>model.py</code>: <code>CALIBRATION_BINS</code>, <code>DCA_THRESHOLDS</code></td>
+<td>5; 0.05–0.5</td>
+<td>Calibration and decision-curve detail</td>
+</tr>
+<tr>
+<td><code>features.py</code>: <code>MODEL_FEATURES</code></td>
+<td>7 inputs</td>
+<td>What the model sees</td>
+</tr>
+<tr>
+<td><code>features.py</code>: allowlists</td>
+<td>3 condition codes, 3 LOINC codes</td>
+<td>What features may read</td>
+</tr>
+<tr>
+<td><code>features.py</code>: <code>DIABETES_MEDICATIONS</code></td>
+<td>25 names</td>
+<td>Drugs left out of <code>med_count</code></td>
+</tr>
+<tr>
+<td><code>label.py</code> + <code>pipeline/data/*.csv</code></td>
+<td>118 + 6 codes</td>
+<td>What counts as diabetes</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Toolkit flags</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Key flags</th>
+<th>Defaults</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>python -m pipeline</code></td>
+<td><code>--raw</code>, <code>--out</code></td>
+<td>required</td>
+</tr>
+<tr>
+<td><code>toolkit/make_plots.py</code></td>
+<td><code>--out</code>, <code>--plots</code></td>
+<td><code>outputs</code>, <code>runs/plots</code></td>
+</tr>
+<tr>
+<td><code>toolkit/multi_seed.py</code></td>
+<td><code>--mode split\|cohort</code>, <code>--n-seeds</code>, <code>--seeds</code>, <code>--master-seed</code>, <code>--population</code>, <code>--split-seed</code>, <code>--recalibrate</code>, <code>--raw</code>, <code>--out</code></td>
+<td>5 seeds from master seed 2026; cohorts cached in <code>data/cohorts/</code></td>
+</tr>
+<tr>
+<td><code>toolkit/train_final.py</code></td>
+<td><code>--raw</code>, <code>--model</code>, <code>--split-seed</code></td>
+<td><code>data/raw/csv</code>, <code>models/model.json</code>, 42</td>
+</tr>
+<tr>
+<td><code>toolkit/predict.py</code></td>
+<td><code>--model</code>, <code>--raw</code>, <code>--out</code>, <code>--no-labels</code>, <code>--local-recal F</code>, <code>--recal-seed</code>, <code>--save-model</code></td>
+<td>recalibration off</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="4-splits-folds-and-seeds">4. Splits, folds and seeds</h2>
+<p>Size the test set by the number of <em>outcome cases</em> it holds, not by a percentage. Here a 20% test set holds only about 37 diabetes cases.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Default</th>
+<th>Trade-off</th>
+<th>When to change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test share</td>
+<td>0.2</td>
+<td>Bigger test = steadier test numbers, less to train on</td>
+<td>0.3 gives about 55 cases here; on small data use repeated CV or bootstrap instead of one split</td>
+</tr>
+<tr>
+<td>CV folds</td>
+<td>5</td>
+<td>More folds = bigger training folds, slower</td>
+<td>10 on larger data; stay at 5 when each fold holds few cases</td>
+</tr>
+<tr>
+<td>Stratification</td>
+<td>on</td>
+<td>Keeps the 16% rate in every split</td>
+<td>Keep on; it can make fold-to-fold spread look smaller than the true uncertainty</td>
+</tr>
+<tr>
+<td>Split seed</td>
+<td>42</td>
+<td>Which patients are tested</td>
+<td>Never pick the best-looking seed; vary it to measure noise</td>
+</tr>
+<tr>
+<td>Cohort seed</td>
+<td>42</td>
+<td>Which synthetic population</td>
+<td>Vary it to see whether a finding replicates</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What the noise looks like here.</strong> Across 10 splits of the published cohort, test AUROC ranged 0.900–0.949 and the test calibration slope 0.86–1.35.</p>
+<ul>
+<li><strong>Split mode</strong> answers <em>did I get a lucky split?</em> Same patients reshuffled; seconds per run.</li>
+<li><strong>Cohort mode</strong> answers <em>does it hold in a new population?</em> New patients; about a minute per 300. Sex was stable across 10 splits but flipped between two cohorts — only cohort mode shows that.</li>
+</ul>
+<p class="senior"><strong>Senior notes.</strong> scikit-learn prefers 5- or 10-fold CV to leave-one-out. With several rows per patient (visits), use <code>StratifiedGroupKFold</code> with patient as the group. Riley et al. 2020 give formal sample-size criteria for model development.</p>
+<hr />
+<h2 id="5-other-models-and-features">5. Other models and features</h2>
+<p>Work in this order: question → label → features → model. Here the label fix moved test AUROC from 0.66 to 0.94, more than any model swap is likely to.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Try (all in scikit-learn)</th>
+<th>Why</th>
+<th>Expect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Penalised logistic regression, penalty tuned by inner CV</td>
+<td>Guards against over-confident weights</td>
+<td>Small change with 7 inputs</td>
+</tr>
+<tr>
+<td>Age as a curve (<code>SplineTransformer</code>)</td>
+<td>Diabetes is near zero under 30, then rises steeply</td>
+<td>Calibration slope closer to 1</td>
+</tr>
+<tr>
+<td><code>HistGradientBoostingClassifier</code></td>
+<td>Finds non-linear effects and interactions</td>
+<td>Little gain on 7 tabular inputs; loses odds ratios</td>
+</tr>
+<tr>
+<td>Deep learning</td>
+<td>Only for sequences, free text or images</td>
+<td>Not suited to this table</td>
+</tr>
+</tbody>
+</table></div>
+<p>A systematic review found no AUROC advantage for machine learning over logistic regression in low-bias clinical studies (Christodoulou et al. 2019). Keep the simpler model unless the gain clearly beats the seed spread.</p>
+<p><strong>Adding a feature</strong></p>
+<ol>
+<li>Write a function in <code>features.py</code> that reads data only through <code>conditions_with()</code> or <code>observations_with()</code>.</li>
+<li>Add its codes to the allowlist; add the column to <code>FEATURES</code> and, if the model should use it, <code>MODEL_FEATURES</code>.</li>
+<li>Write a test with a value worked out by hand from <code>tests/fixtures</code>.</li>
+<li>Check: known before the outcome? Could a programme act on it?</li>
+</ol>
+<p class="senior"><strong>Senior notes.</strong> Choose predictors from clinical knowledge before seeing results; adding or dropping features because of one run tends to overfit.</p>
+<hr />
+<h2 id="6-calibration-recalibration-and-thresholds">6. Calibration, recalibration and thresholds</h2>
+<p>The model's weights decide <strong>who ranks above whom</strong>. Recalibration corrects <strong>how big the percentages are</strong>. The threshold decides <strong>who gets flagged</strong>. Change them separately.</p>
+<p><strong>Calibration</strong> asks: of the patients given about 20% risk, do about 20 in 100 have diabetes? It is read from a line fitted on the log-odds scale between predicted and actual outcome. Slope <em>b</em> = 1 and intercept <em>a</em> = 0 is perfect; <em>b</em> &lt; 1 means over-confident, <em>a</em> &lt; 0 means risks too high overall.</p>
+<p><strong>Recalibration</strong> applies that line to every prediction <em>p</em>:</p>
+<pre><code>p_new = 1 / (1 + exp(-(a + b × ln(p / (1 − p)))))
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>a and b come from</th>
+<th>Use when</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td>—</td>
+<td>Calibration is already good</td>
+<td>default</td>
+</tr>
+<tr>
+<td>Stored</td>
+<td>Out-of-fold predictions on the training cohort</td>
+<td>Checking the model's own calibration</td>
+<td><code>multi_seed.py --recalibrate</code>; saved by <code>train_final.py</code></td>
+</tr>
+<tr>
+<td>Local</td>
+<td>A share of the <strong>new</strong> site's labelled data; the rest checks it</td>
+<td>Moving the model to a new population</td>
+<td><code>predict.py --local-recal 0.5</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Result on a new 2,322-patient cohort</strong> (model trained on the published cohort, never retrained; 1,161 patients to learn a/b, 1,161 to check):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Calibration slope</th>
+<th>Calibration-in-the-large</th>
+<th>Brier</th>
+<th>Top risk group: predicted vs observed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw</td>
+<td>0.813</td>
+<td>−0.030</td>
+<td>0.0957</td>
+<td>0.64 vs 0.50</td>
+</tr>
+<tr>
+<td>Stored a/b</td>
+<td>0.860</td>
+<td>−0.028</td>
+<td>0.0945</td>
+<td>0.62 vs 0.50</td>
+</tr>
+<tr>
+<td>Local a/b</td>
+<td>0.934</td>
+<td>−0.0003</td>
+<td>0.0918</td>
+<td>0.52 vs 0.50</td>
+</tr>
+</tbody>
+</table></div>
+<p>AUROC on the check half was 0.8832 for all three: ranking never changes.</p>
+<p><strong>When not to recalibrate.</strong> With little data the correction is itself noisy: on two 300-patient cohorts it made calibration worse (slope 0.96 → 1.18 and 1.14 → 1.48).</p>
+<p><strong>Thresholds.</strong> The repo uses Youden's J on development data (0.2472), which weighs a missed case and a false alarm equally. For screening, pick the threshold from the decision curve or the real cost of each error. <code>predict.py</code> flags on raw risk at the stored threshold, so recalibration does not change who is flagged.</p>
+<p class="senior"><strong>Senior notes — the updating ladder.</strong> Lightest to heaviest: intercept only → intercept and slope (this toolkit) → re-estimate some weights → full retrain. Climb only as far as the new data's size supports.</p>
+<hr />
+<h2 id="7-freeze-a-model-and-test-it-on-new-data">7. Freeze a model and test it on new data</h2>
+<p>External validation means: train once, freeze, score data the model has never seen — <strong>without retraining</strong>. Cohort mode in <code>multi_seed.py</code> retrains every time, so it is not this test.</p>
+<pre><code class="language-bash">python toolkit/train_final.py --raw data/raw/csv --model models/seed42.json
+python toolkit/multi_seed.py --mode cohort --seeds 7 --population 2000      # makes data/cohorts/p2000_s7
+python toolkit/predict.py --model models/seed42.json --raw data/cohorts/p2000_s7/csv --out runs/ext_p2000
+python toolkit/predict.py --model models/seed42.json --raw data/cohorts/p2000_s7/csv --out runs/ext_p2000_local \
+       --local-recal 0.5 --save-model models/seed42_recal.json
+</code></pre>
+<ul>
+<li><strong>The JSON model</strong> holds the 7 feature names, imputer medians, scaler means and SDs, 7 weights and an intercept, a and b, the threshold, and where it was trained. That is all a logistic regression is. JSON is used instead of pickle because a pickle file can run code when opened. <code>train_final.py</code> checks that the JSON reproduces scikit-learn exactly.</li>
+<li><strong>Outputs:</strong> <code>predictions.csv</code> (risk, recalibrated risk, flag per patient) and, with outcomes, <code>evaluation.md</code> (TP/FP/FN/TN, sensitivity, PPV, AUROC, calibration). <code>--no-labels</code> scores data without outcomes.</li>
+<li><strong>First result:</strong> the frozen model kept its ranking on the new cohort (AUROC 0.888 vs 0.914 internally) but over-predicted the top-risk group (64% vs 51%). Ranking usually travels better than calibration.</li>
+</ul>
+<p class="senior"><strong>Senior notes.</strong> Keep the recalibration slice and the check slice apart, as <code>--local-recal</code> does. Learning a/b on all the new data and reporting calibration on that same data overstates the fix.</p>
+<hr />
+<h2 id="8-adapting-it-singapore-other-data-other-diseases-policy">8. Adapting it: Singapore, other data, other diseases, policy</h2>
+<p>The pipeline is a scaffold: load → clean → features → label → quality → model → validate. Each adaptation changes specific files and leaves the rest alone.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>What changes</th>
+<th>What stays</th>
+<th>First step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Singapore relevance</strong></td>
+<td>Data source (approved access only); label lists from local coding; features: ethnicity with results by subgroup, Asian BMI bands (23, 27.5), waist, lipids</td>
+<td>Cleaning, allowlist, protocol, toolkit</td>
+<td>Agree data governance; map local tables to the 5 tables <code>load.py</code> expects</td>
+</tr>
+<tr>
+<td><strong>A synthetic Singapore cohort</strong> (idea)</td>
+<td>Synthea demographics from Census 2020 (planning area × ethnicity × sex); disease modules recalibrated to local rates</td>
+<td>Everything downstream</td>
+<td>Build the demographics file; check prevalence against NPHS</td>
+</tr>
+<tr>
+<td><strong>Other open data</strong> (e.g. MIMIC-IV demo)</td>
+<td>A loader that maps its tables to the 5 expected tables; ICD instead of SNOMED code lists</td>
+<td>Features logic, protocol</td>
+<td>Write <code>load_mimic.py</code>; rebuild label and allowlist code lists</td>
+</tr>
+<tr>
+<td><strong>Another disease</strong> (e.g. chronic kidney disease)</td>
+<td>Label code list; features and allowlist; leakage list (its treatments and diagnostic tests)</td>
+<td>Pipeline, protocol, toolkit</td>
+<td>Pull the code list from a terminology server; list what must never be a feature</td>
+</tr>
+<tr>
+<td><strong>True prediction</strong></td>
+<td>Index date, look-back window, exclude existing cases, fixed horizon</td>
+<td>Everything else</td>
+<td>Add an index-date step before features</td>
+</tr>
+<tr>
+<td><strong>Policy questions</strong> ("which campaign?")</td>
+<td>Different data and methods: modifiable factors (diet, sugary drinks, activity) are not in EHR data; attributable-fraction or causal methods; policy evaluation needs trials or before/after designs</td>
+<td>The data-quality and documentation habits</td>
+<td>Start from survey or cohort data, not this EHR table</td>
+</tr>
+</tbody>
+</table></div>
+<p class="senior"><strong>Senior notes.</strong> For policy, the evidence chain matters: a Singapore trial found the Nutri-Grade label cut sugar <em>purchased</em> from beverages by 1.51 g per serving (Shin et al. 2023). That is an intermediate outcome; linking it to fewer diabetes cases needs further steps this repo does not cover.</p>
+<hr />
+<h2 id="9-reading-the-outputs">9. Reading the outputs</h2>
+<p>Read discrimination, calibration and usefulness as three separate questions; a model can pass one and fail another.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Plain meaning</th>
+<th>Good looks like</th>
+<th>Published (v0.2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AUROC</td>
+<td>Chance a random diabetic patient scores above a random non-diabetic one</td>
+<td>0.5 = coin toss, 1 = perfect</td>
+<td>0.9144</td>
+</tr>
+<tr>
+<td>AUPRC</td>
+<td>Precision averaged over all sensitivities; focuses on the 16% minority</td>
+<td>Well above chance (= prevalence)</td>
+<td>0.6088 vs 0.1609</td>
+</tr>
+<tr>
+<td>Brier score</td>
+<td>Mean squared gap between predicted risk and outcome</td>
+<td>Lower is better</td>
+<td>0.084</td>
+</tr>
+<tr>
+<td>Calibration slope</td>
+<td>Predictions too spread out (&lt; 1) or too bunched (&gt; 1)</td>
+<td>Close to 1</td>
+<td>0.9526</td>
+</tr>
+<tr>
+<td>Calibration-in-the-large</td>
+<td>Observed rate minus average prediction</td>
+<td>Close to 0</td>
+<td>−0.0066</td>
+</tr>
+<tr>
+<td>Sensitivity / specificity</td>
+<td>Share of cases flagged / non-cases not flagged</td>
+<td>Set by the use case</td>
+<td>0.81 / 0.89</td>
+</tr>
+<tr>
+<td>PPV</td>
+<td>Share of flagged patients who have diabetes</td>
+<td>Falls when prevalence falls</td>
+<td>0.58</td>
+</tr>
+<tr>
+<td>Net benefit</td>
+<td>Benefit of acting on the model at a threshold, net of false alarms</td>
+<td>Above treat-all and treat-none</td>
+<td>above both, 0.05–0.5</td>
+</tr>
+<tr>
+<td>Odds ratio per SD</td>
+<td>Change in odds per standard deviation, others held fixed</td>
+<td>Stable across seeds</td>
+<td>age 2.92, hypertension 2.91</td>
+</tr>
+</tbody>
+</table></div>
+<p class="senior"><strong>Senior notes.</strong> For a 0/1 feature, "per SD" is not the odds ratio of having vs not having it. These are adjusted associations inside Synthea's rules: hyperlipidemia triples raw prevalence (13% → 41%) but its adjusted odds ratio is about 1.06, because age explains most of it.</p>
+<hr />
+<h2 id="10-common-mistakes-and-a-checklist">10. Common mistakes and a checklist</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mistake</th>
+<th>Looks like</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Narrow label</td>
+<td>Patients with diabetes codes counted as healthy (v0 missed 94)</td>
+<td>Read "codes outside the label" in <code>dq_report.md</code></td>
+</tr>
+<tr>
+<td>Leakage</td>
+<td>Suspiciously high AUROC; treatments or diagnostic tests as features</td>
+<td>Allowlist + leakage tests</td>
+</tr>
+<tr>
+<td>Post-diagnosis features</td>
+<td>Visit counts as the top predictor (v0.1)</td>
+<td>Keep care-utilisation columns out of the model</td>
+</tr>
+<tr>
+<td>Tuning on the test set</td>
+<td>Picking the version or seed with the best test AUROC</td>
+<td>Decide on development CV across seeds</td>
+</tr>
+<tr>
+<td>Trusting one split</td>
+<td>One calibration slope taken as truth</td>
+<td><code>multi_seed.py</code>; report mean ± SD</td>
+</tr>
+<tr>
+<td>Recalibrating on tiny data</td>
+<td>Calibration gets worse after the fix</td>
+<td>Recalibrate only with enough new data</td>
+</tr>
+<tr>
+<td>Calling association prediction</td>
+<td>"Predicts diabetes" from whole-record features</td>
+<td>Say "associated with"; time-anchor to predict</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Before you share a result</strong></p>
+<ul>
+<li class="task"><span class="box" aria-hidden="true"></span><code>pytest</code> passes; leakage tests unchanged or deliberately updated</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Baseline reproduces (test AUROC 0.9144)</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Change judged on development data across 10+ split seeds</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Test set used once, after the decision</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Calibration reported, not only AUROC</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Threshold rule stated and fits the use case</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Limits written down: synthetic, US-modelled, association, no lifestyle data</li>
+<li class="task"><span class="box" aria-hidden="true"></span>Nothing from <code>runs/</code>, <code>models/</code> or <code>data/</code> committed</li>
+</ul>
+<hr />
+<h2 id="sources">Sources</h2>
+<ul>
+<li>Synthea — https://github.com/synthetichealth/synthea · Walonoski et al., JAMIA 2018, doi:10.1093/jamia/ocx079</li>
+<li>Chen et al. 2019, validity of Synthea data — doi:10.1186/s12911-019-0793-0</li>
+<li>scikit-learn cross-validation guide — https://scikit-learn.org/stable/modules/cross_validation.html</li>
+<li>Christodoulou et al. 2019, ML vs logistic regression — J Clin Epidemiol 110:12–22</li>
+<li>Van Calster et al. 2019, calibration — https://pmc.ncbi.nlm.nih.gov/articles/PMC6912996</li>
+<li>Vickers &amp; Elkin 2006, decision curve analysis — https://pubmed.ncbi.nlm.nih.gov/17099194/</li>
+<li>Riley et al. 2020, sample size for prediction models — doi:10.1136/bmj.m441</li>
+<li>Seah et al. 2023, T2D risk by ethnicity in Singapore — doi:10.1136/bmjdrc-2023-003385</li>
+<li>Shin, Puri &amp; Finkelstein 2023, Nutri-Grade randomised trial — doi:10.1186/s12966-023-01422-4</li>
+<li>WHO Expert Consultation 2004, BMI for Asian populations — doi:10.1016/S0140-6736(03)15268-3</li>
+<li>Census of Population 2020, resident population by planning area, ethnic group and sex — data.gov.sg</li>
+</ul>
+  </main>
+</div>
+<footer><div>Synthetic data only. Nothing here is clinically validated. Code under the MIT licence. This page is generated from <code>GUIDE.md</code> by <code>docs/build_guide.py</code>.</div></footer>
+<script>
+(function(){
+  // Repo link: works on GitHub Pages (owner.github.io/repo/) without hard-coding the owner.
+  var h=location.hostname, a=document.getElementById('repo-link');
+  if(/\.github\.io$/.test(h)){var repo=location.pathname.split('/')[1]; a.href='https://github.com/'+h.split('.')[0]+'/'+repo;}
+  // Copy buttons on code blocks.
+  document.querySelectorAll('pre').forEach(function(pre){
+    var b=document.createElement('button'); b.className='copy'; b.type='button'; b.textContent='Copy';
+    b.addEventListener('click',function(){
+      var t=pre.querySelector('code').innerText;
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)},function(){b.textContent='Select + copy'});
+    }); pre.appendChild(b);
+  });
+  // Highlight the current section in the sidebar.
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
+      links.forEach(function(l){l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id)});}})},{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('main h2[id]').forEach(function(h){io.observe(h)});
+  }
+})();
+</script>
+</body>
+</html>

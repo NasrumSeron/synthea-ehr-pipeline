@@ -13,3 +13,9 @@ HANDBACK.md
 reference/
 data/raw.tmp/
 *.part
+
+# toolkit outputs (never committed)
+runs/
+models/
+data/cohorts/
+*.annotated.*

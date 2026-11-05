@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practitioner's guide · synthea-ehr-pipeline</title>
+<meta name="description" content="How to run, understand, change and extend a tested EHR modelling pipeline on synthetic data.">
+<style>
+:root{
+  --bg:#fbfbf9;--panel:#f2f3ef;--ink:#1c2230;--muted:#5a6272;--line:#dcdfd8;--line-strong:#8b929e;
+  --accent:#0f766e;--accent-weak:#e3f2ef;--code-bg:#f2f3ef;--warn:#9a3412;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111419;--panel:#191d24;--ink:#e6e8ec;--muted:#a1a8b4;--line:#2a3039;--line-strong:#7b8390;
+  --accent:#4fd1c5;--accent-weak:rgba(79,209,197,.13);--code-bg:#191d24;--warn:#fdba74;}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+header.hero{border-bottom:1px solid var(--line);background:var(--panel)}
+.hero-in{max-width:1120px;margin:0 auto;padding:44px 24px 34px}
+.eyebrow{font:600 13px/1 var(--mono);letter-spacing:.04em;color:var(--accent);text-transform:uppercase}
+h1{font-size:clamp(30px,4.2vw,42px);line-height:1.15;margin:12px 0 10px;letter-spacing:-.01em}
+.lede{font-size:19px;color:var(--muted);max-width:680px;margin:0}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;padding:0;list-style:none}
+.pills li{font:600 13px/1 var(--sans);padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--bg)}
+.pills li.warn{color:var(--warn)}
+.actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;font:600 15px/1 var(--sans);padding:11px 16px;border-radius:8px;border:1px solid var(--accent);text-decoration:none}
+.btn.primary{background:var(--accent);color:var(--bg)}
+.layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
+nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:32px 0}
+nav.toc p{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px}
+nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
+nav.toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:14.5px;line-height:1.35}
+nav.toc a:hover{color:var(--ink)}
+nav.toc a.on{color:var(--ink);border-left-color:var(--accent);font-weight:600}
+main{min-width:0;max-width:780px;padding:20px 0 80px}
+h2{font-size:26px;line-height:1.25;margin:56px 0 14px;padding-top:28px;border-top:1px solid var(--line);letter-spacing:-.005em}
+main>h2:first-child{border-top:0;margin-top:12px}
+h3{font-size:19px;margin:30px 0 8px}
+p,ul,ol{margin:0 0 16px}
+li{margin:4px 0}
+strong{font-weight:650}
+hr{display:none}
+code{font:0.88em var(--mono);background:var(--code-bg);padding:2px 5px;border-radius:5px;border:1px solid var(--line)}
+pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;margin:0 0 20px}
+pre code{background:none;border:0;padding:0;font-size:14px;line-height:1.6}
+.copy{position:absolute;top:8px;right:8px;font:600 12px/1 var(--sans);padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--muted);cursor:pointer}
+.copy:hover{color:var(--ink)}
+.table-wrap{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{background:var(--panel);font-weight:650;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+blockquote.callout{margin:0 0 22px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-weak);border-radius:0 10px 10px 0}
+blockquote.callout p{margin:0}
+p.senior{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:15.5px;color:var(--muted)}
+p.senior strong:first-child{color:var(--ink);display:block;font:600 12px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+li.task{list-style:none;margin-left:-22px;display:flex;gap:10px;align-items:flex-start}
+li.task .box{flex:0 0 16px;height:16px;margin-top:5px;border:1.5px solid var(--line-strong);border-radius:4px}
+figure.fig{margin:8px 0 26px;padding:18px 16px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+figure.fig svg{display:block;width:100%;height:auto}
+figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+.s-title{font:600 15px var(--sans);fill:var(--ink)}
+.s-box{fill:none;stroke:var(--line-strong);stroke-width:1.25}
+.s-accent{fill:var(--accent-weak);stroke:var(--accent);stroke-width:2}
+.s-zone{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.s-zone-label{font:600 12px var(--mono);fill:var(--muted)}
+.s-lines{fill:none;stroke:var(--line-strong);stroke-width:1.25}
+.s-dash{stroke-dasharray:4 4}
+.s-head{fill:var(--line-strong)}
+.s-k{font:600 11px var(--mono);fill:var(--muted);text-anchor:middle}
+.s-n{font:600 13px var(--sans);fill:var(--ink);text-anchor:middle}
+.s-n2{font:13px var(--sans);fill:var(--ink);text-anchor:middle}
+.s-sub{font:11.5px var(--sans);fill:var(--muted);text-anchor:middle}
+.s-left{text-anchor:start}
+.s-ink{fill:var(--ink)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer div{max-width:1120px;margin:0 auto;padding:22px 24px}
+details.toc-mobile{display:none}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:0;padding:0 16px}
+  nav.toc{display:none}
+  details.toc-mobile{display:block;margin:16px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  details.toc-mobile summary{cursor:pointer;padding:12px 14px;font-weight:600}
+  details.toc-mobile ol{margin:0;padding:0 14px 12px 34px}
+  .hero-in{padding:32px 16px 26px}
+  body{font-size:16px}
+  h2{font-size:23px}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in">
+  <div class="eyebrow">synthea-ehr-pipeline · practitioner's guide</div>
+  <h1>From first run to a model you can move to new data</h1>
+  <p class="lede">How to run, understand, change and extend a tested EHR modelling pipeline. Written for a first-year data scientist, with notes for seniors on the judgement calls.</p>
+  <ul class="pills"><li class="warn">Synthetic data only · not clinical</li><li>Association, not prediction</li><li>81 tests</li><li>v0.2</li></ul>
+  <div class="actions"><a class="btn primary" id="repo-link" href="../">View the code</a><a class="btn" href="#quick-start">Quick start</a></div>
+</div></header>
+<div class="layout">
+  <nav class="toc" aria-label="Contents"><p>Contents</p><ol>
+{{TOC}}
+  </ol></nav>
+  <main>
+    <details class="toc-mobile"><summary>Contents</summary><ol>
+{{TOC}}
+    </ol></details>
+{{BODY}}
+  </main>
+</div>
+<footer><div>Synthetic data only. Nothing here is clinically validated. Code under the MIT licence. This page is generated from <code>GUIDE.md</code> by <code>docs/build_guide.py</code>.</div></footer>
+<script>
+(function(){
+  // Repo link: works on GitHub Pages (owner.github.io/repo/) without hard-coding the owner.
+  var h=location.hostname, a=document.getElementById('repo-link');
+  if(/\.github\.io$/.test(h)){var repo=location.pathname.split('/')[1]; a.href='https://github.com/'+h.split('.')[0]+'/'+repo;}
+  // Copy buttons on code blocks.
+  document.querySelectorAll('pre').forEach(function(pre){
+    var b=document.createElement('button'); b.className='copy'; b.type='button'; b.textContent='Copy';
+    b.addEventListener('click',function(){
+      var t=pre.querySelector('code').innerText;
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)},function(){b.textContent='Select + copy'});
+    }); pre.appendChild(b);
+  });
+  // Highlight the current section in the sidebar.
+  var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
+      links.forEach(function(l){l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id)});}})},{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('main h2[id]').forEach(function(h){io.observe(h)});
+  }
+})();
+</script>
+</body>
+</html>
