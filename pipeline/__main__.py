@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pipeline import PipelineError
 from pipeline.clean import clean_tables
-from pipeline.features import build_features, default_as_of
+from pipeline.features import MODEL_FEATURES, build_features, default_as_of
 from pipeline.label import diabetes_codes, diabetes_label
 from pipeline.load import load_tables
 from pipeline.model import CV_FOLDS, train_and_evaluate
@@ -32,7 +32,7 @@ def run(raw_dir, out_dir):
     if y.nunique() < 2 or y.value_counts().min() < CV_FOLDS:
         raise PipelineError(f"need at least {CV_FOLDS} patients in each label class to train the model")
 
-    metrics = train_and_evaluate(X, y)
+    metrics = train_and_evaluate(X[MODEL_FEATURES], y)
     report = build_report(raw_counts, clean_log, tables, patient_table, y, codes, as_of)
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -64,9 +64,11 @@ def main(argv=None):
     except Exception as e:  # anything else: one clear line, no traceback
         print(f"error: unexpected failure ({type(e).__name__}): {e}", file=sys.stderr)
         return 1
-    cm = metrics["confusion_matrix_test"]
+    t = metrics["test"]
+    cm = t["at_chosen_threshold"]
     print(f"patients={metrics['n_patients']} prevalence={metrics['prevalence']} "
-          f"AUROC={metrics['auroc_test']} TP={cm['tp']} FP={cm['fp']} FN={cm['fn']} TN={cm['tn']}")
+          f"test AUROC={t['auroc']} AUPRC={t['auprc']} Brier={t['calibration']['brier']} "
+          f"threshold={cm['threshold']} sens={cm['sensitivity']} spec={cm['specificity']}")
     print(f"wrote {args.out / 'dq_report.md'}, {args.out / 'metrics.json'}, {args.out / 'patient_table.csv'}")
     return 0
 

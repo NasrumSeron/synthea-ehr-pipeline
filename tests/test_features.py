@@ -84,3 +84,11 @@ def test_patient_with_no_events_gets_zeros_and_nans(tables):
     row = build_features(tables, AS_OF).loc["p6"]
     assert row["enc_ambulatory"] == 0 and row["med_count"] == 0 and row["hypertension"] == 0
     assert math.isnan(row["bmi_latest"])
+
+
+def test_model_features_exclude_post_diagnosis_care():
+    from pipeline.features import MODEL_FEATURES, NOT_MODEL_INPUTS
+    assert MODEL_FEATURES == ["age", "sex_male", "hypertension", "hyperlipidemia",
+                              "bmi_latest", "sbp_latest", "dbp_latest"]
+    assert not set(MODEL_FEATURES) & set(NOT_MODEL_INPUTS)
+    assert set(MODEL_FEATURES) | set(NOT_MODEL_INPUTS) == set(FEATURES)

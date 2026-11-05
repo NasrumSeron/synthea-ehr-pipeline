@@ -5,9 +5,11 @@
 
 A small, tested pipeline on EHR-shaped data:
 
-**raw Synthea CSVs → cleaned tables → one row per patient (11 features + label) → data-quality report → baseline logistic regression.**
+**raw Synthea CSVs → cleaned tables → one row per patient (11 descriptive columns + label) → data-quality report → logistic regression on 7 patient characteristics, evaluated with a development / test protocol.**
 
-It is a v0 portfolio project showing ETL, feature engineering with an explicit leakage guard, data-quality reporting and a baseline model. It is not a research result.
+It is a portfolio project showing ETL, feature engineering with an explicit leakage guard, data-quality reporting and a baseline model with honest evaluation. It is not a research result.
+
+**The question it answers (v0.2): which recorded patient characteristics are *associated* with having diabetes in this synthetic cohort.** It is not a risk-prediction model (see Known limits).
 
 ## What it does
 
@@ -15,31 +17,45 @@ It is a v0 portfolio project showing ETL, feature engineering with an explicit l
 |---|---|---|
 | Load | `pipeline/load.py` | Reads `patients`, `encounters`, `conditions`, `medications`, `observations` (only the columns used). Missing files or columns give a clear error. |
 | Clean | `pipeline/clean.py` | Trims strings, parses dates, drops exact duplicate rows and rows with no patient ID, coerces observation values to numbers, sorts patients by ID so results don't depend on row order. Logs row counts. |
-| Features | `pipeline/features.py` | 11 columns per patient (below). Condition and observation features can only read codes on an allowlist. |
-| Label | `pipeline/label.py` | `diabetes = 1` if the patient has any condition code in SNOMED CT `<<73211009` (Diabetes mellitus and its 117 descendants, 118 codes) **or** one of the 6 diabetes-complication codes found in the cohort, all under `74627003` *Complication due to diabetes mellitus* (124 codes). Cross-sectional ("ever recorded"), not prediction over time. |
-| Quality | `pipeline/quality.py` | `outputs/dq_report.md`: row counts per step, which label codes occur, diabetes-related codes that are *not* in the label, excluded medications, missing % / min / max per feature. |
-| Model | `pipeline/model.py` | Median impute → standard scale → logistic regression. Stratified 80/20 split, `random_state=42`. Test AUROC, confusion matrix at 0.5, plus 5-fold stratified CV AUROC on all patients. |
+| Features | `pipeline/features.py` | 11 columns per patient (below). Condition and observation features can only read codes on an allowlist. The model uses 7 of them. |
+| Label | `pipeline/label.py` | `diabetes = 1` if the patient has any condition code in SNOMED CT `<<73211009` (Diabetes mellitus and its 117 descendants, 118 codes) **or** one of the 6 diabetes-complication codes found in the cohort, all under `74627003` *Complication due to diabetes mellitus* (124 codes). Cross-sectional ("ever recorded"). |
+| Quality | `pipeline/quality.py` | `outputs/dq_report.md`: row counts per step, which label codes occur, diabetes-related codes that are *not* in the label, excluded medications, missing % / min / max per column. |
+| Model | `pipeline/model.py` | Median impute → standard scale → logistic regression, with the evaluation protocol below. |
 
-### Features
+### Columns and model inputs
 
-| Feature | Definition |
-|---|---|
-| `age` | Whole years at death, or at the latest encounter date in the data if alive |
-| `sex_male` | 1 if `GENDER` is M |
-| `enc_ambulatory`, `enc_emergency`, `enc_inpatient` | Count of encounters of that class |
-| `hypertension` | Any condition `59621000` Essential hypertension |
-| `hyperlipidemia` | Any condition `55822004` Hyperlipidemia or `13644009` Hypercholesterolemia |
-| `bmi_latest`, `sbp_latest`, `dbp_latest` | Most recent LOINC `39156-5` BMI, `8480-6` systolic BP, `8462-4` diastolic BP (mean if several on that date; missing if never measured) |
-| `med_count` | Distinct medication codes ever prescribed, **excluding glucose-lowering drugs** (metformin, insulins, GLP-1s, sulfonylureas, DPP-4 and SGLT2 inhibitors, etc., matched on description) |
+| Column | Definition | Model input? |
+|---|---|---|
+| `age` | Whole years at death, or at the latest encounter date in the data if alive | ✅ |
+| `sex_male` | 1 if `GENDER` is M | ✅ |
+| `hypertension` | Any condition `59621000` Essential hypertension | ✅ |
+| `hyperlipidemia` | Any condition `55822004` Hyperlipidemia or `13644009` Hypercholesterolemia | ✅ |
+| `bmi_latest`, `sbp_latest`, `dbp_latest` | Most recent LOINC `39156-5` BMI, `8480-6` systolic BP, `8462-4` diastolic BP (mean if several on that date; missing if never measured) | ✅ |
+| `enc_ambulatory`, `enc_emergency`, `enc_inpatient` | Count of encounters of that class | ❌ descriptive only |
+| `med_count` | Distinct medication codes ever prescribed, **excluding glucose-lowering drugs** (metformin, insulins, GLP-1s, sulfonylureas, DPP-4 and SGLT2 inhibitors, etc., matched on description) | ❌ descriptive only |
+
+**Why encounters and `med_count` are not model inputs (v0.2).** With an "ever recorded" label, visit counts and prescriptions largely measure care received *after* a diabetes diagnosis (reverse causation). In v0.1 `enc_ambulatory` had the largest coefficient. They also are not actionable: they say nothing about which risk factors a prevention programme could change. The model keeps patient characteristics only.
 
 ### Leakage guard
 
-Features read conditions and observations only through two accessor functions that refuse any code not on an **allowlist** (3 condition codes, 3 LOINC codes). An allowlist rather than a blocklist, because diabetic complications (e.g. *Disorder of kidney due to diabetes mellitus*) are not under `73211009` and a blocklist built from the label codes would let them through. `tests/test_leakage.py` checks that:
+Features read conditions and observations only through two accessor functions that refuse any code not on an **allowlist** (3 condition codes, 3 LOINC codes). An allowlist rather than a blocklist, because diabetic complications (e.g. *Disorder of kidney due to diabetes mellitus*) are not under `73211009`, so a blocklist built from the label codes would let them through. Diabetes drugs and glucose / HbA1c are excluded because they are the treatment and the diagnostic test: a model that sees them learns the answer, not a pattern. `tests/test_leakage.py` checks that:
 
 - the allowlists contain no label code, no prediabetes code, no glucose or HbA1c;
-- the accessors raise on any other code;
+- the accessors raise on any other code (including all 6 complication codes);
 - deleting every non-allowlisted condition/observation row (and every diabetes drug) leaves all features unchanged;
 - giving a patient diabetes, a glucose, an HbA1c and three diabetes drugs leaves all features unchanged.
+
+### Evaluation protocol (v0.2)
+
+1. **Split once**, stratified by label: 80 % development, 20 % test (`random_state=42`).
+2. **Every choice is made on the development set only:** 5-fold stratified cross-validation (AUROC, AUPRC), and the decision threshold, chosen by Youden's J (sensitivity + specificity − 1) on out-of-fold development predictions.
+3. **The test set is used once**, by the model refitted on all development data:
+   - discrimination: AUROC and AUPRC (AUPRC chance level = test prevalence);
+   - calibration: Brier score, calibration-in-the-large (observed − mean predicted; ideal 0), calibration slope (ideal 1), observed vs predicted risk in 5 equal-size groups;
+   - classification at the chosen threshold (and at 0.5 for comparison): sensitivity, specificity, PPV, NPV;
+   - decision curve: net benefit vs "treat all" and "treat none" at thresholds 0.05–0.5 (Vickers & Elkin 2006).
+
+`tests/test_model.py` checks that changing test-set data changes no development result or threshold, and checks the threshold, net-benefit and calibration helpers against hand-worked examples.
 
 ## How to run
 
@@ -60,51 +76,78 @@ python -m pipeline --raw data/raw/csv --out outputs
 python -m pytest
 ```
 
-Synthea settings: `-p 1000 -s 42 -cs 42 -r 20261101 -e 20261101`, CSV export only. `-p 1000` asks for 1000 living patients; Synthea also writes the patients who died during simulation, so `patients.csv` has 1146 rows. Synthea writes rows in a different order on each run, so the pipeline sorts by patient ID; three independent generations gave byte-identical `metrics.json` and `dq_report.md`.
+Synthea settings: `-p 1000 -s 42 -cs 42 -r 20261101 -e 20261101`, CSV export only. `-p 1000` asks for 1000 living patients; Synthea also writes the patients who died during simulation, so `patients.csv` has 1146 rows. Synthea writes rows in a different order on each run, so the pipeline sorts by patient ID; re-runs give identical `metrics.json` and `dq_report.md`.
 
 Outputs: `outputs/dq_report.md` and `outputs/metrics.json` (committed), `outputs/patient_table.csv` (git-ignored).
 
-## Results (v0.1 run)
+## Results (v0.2 run)
 
 All numbers are copied from [`outputs/metrics.json`](outputs/metrics.json) and [`outputs/dq_report.md`](outputs/dq_report.md).
 
+**Cohort and split**
+
 | | |
 |---|---|
-| Patients (rows in patient table = rows in `patients.csv`) | 1146 |
-| Duplicate patient IDs | 0 |
+| Patients (rows in patient table = rows in `patients.csv`) | 1146 (0 duplicate IDs) |
 | Diabetes-positive (label) | 182 (prevalence 0.1588) |
-| Train / test | 916 / 230 (test prevalence 0.1609) |
-| **Test AUROC** (single 80/20 split) | **0.9426** |
-| 5-fold CV AUROC, mean ± sd | 0.9276 ± 0.0183 (folds 0.9521, 0.9362, 0.9361, 0.9128, 0.9008) |
-| Confusion matrix, test, threshold 0.5 | TP 24 · FP 10 · FN 13 · TN 183 |
-| Missing values | `bmi_latest` 2.0 %; all other features 0.0 % |
+| Development / test | 916 (prevalence 0.1583) / 230 (prevalence 0.1609) |
+| Model inputs | 7: age, sex_male, hypertension, hyperlipidemia, bmi_latest, sbp_latest, dbp_latest |
+| Missing values | `bmi_latest` 2.0 %; all other columns 0.0 % |
 
-Largest standardized coefficients: `enc_ambulatory` 0.982, `hypertension` 0.9218, `age` 0.8529, `enc_emergency` 0.5466, `med_count` 0.3216.
+**Development set (5-fold stratified CV)**
 
-**How to read this.** The high AUROC does **not** mean diabetes can be predicted. The label is "ever recorded" and the features use the whole record, so the strongest signals are things that follow a diagnosis: more ambulatory visits (diabetes follow-up care) and co-recorded hypertension. The model is also learning Synthea's simulation rules, not clinical evidence. At the default 0.5 threshold it finds 24 of 37 test positives; there is no threshold tuning or calibration.
+| | |
+|---|---|
+| AUROC, mean ± sd | 0.9082 ± 0.0203 (folds 0.895, 0.888, 0.9035, 0.9465, 0.908) |
+| AUPRC, mean | 0.6583 |
+| Chosen threshold (Youden's J, out-of-fold) | 0.2472 |
 
-**Label change in v0.1.** v0 labelled only `<<73211009` and missed 94 patients who had a diabetes-complication code (e.g. *Disorder of kidney due to diabetes mellitus*) but no diabetes code; they were labelled 0. v0 results on the same cohort for comparison: 88 positives, test AUROC 0.6648, CV AUROC 0.8002 ± 0.06, TP 1 · FN 17.
+**Test set (used once)**
 
-**Tests:** 69 pytest tests, all passing (`python -m pytest`).
+| | |
+|---|---|
+| **AUROC** | **0.9144** |
+| **AUPRC** (chance level 0.1609) | **0.6088** |
+| Brier score | 0.084 |
+| Calibration-in-the-large / slope | −0.0066 / 0.9526 |
+| At threshold 0.2472 | TP 30 · FP 22 · FN 7 · TN 171 — sensitivity 0.8108, specificity 0.886, PPV 0.5769, NPV 0.9607 |
+| At threshold 0.5 (for comparison) | TP 21 · FP 15 · FN 16 · TN 178 — sensitivity 0.5676, specificity 0.9223 |
+
+Calibration by predicted-risk group (test, 46 patients each): mean predicted 0.0062 / 0.0156 / 0.0392 / 0.1518 / 0.6244 vs observed 0.0 / 0.0 / 0.0652 / 0.1087 / 0.6304.
+
+Decision curve (test): the model's net benefit is above "treat all" and "treat none" at every threshold checked, e.g. 0.1285 vs 0.0676 at 0.1, and 0.1109 vs −0.0489 at 0.2 (full table in `metrics.json`).
+
+Odds ratio per standard deviation (model fitted on the development set): `age` 2.918, `hypertension` 2.9114, `bmi_latest` 1.2547, `sex_male` 1.2163, `sbp_latest` 1.065, `hyperlipidemia` 1.0577, `dbp_latest` 0.8761. For 0/1 columns, "per SD" is not the odds ratio of having vs not having the condition.
+
+**How to read this.** These are adjusted associations inside Synthea's simulation rules, not causal effects and not clinical evidence. Calibration on the test set is close (slope 0.95, mean error −0.007), and choosing the threshold on the development set raises sensitivity from 0.57 (at 0.5) to 0.81 at the cost of more false positives. The threshold criterion (Youden's J) weights a missed case and a false alarm equally; a real screening programme would set it from the costs of each.
+
+**Version history on the same cohort.** v0 (label `<<73211009` only, 11 inputs): test AUROC 0.6648. v0.1 (label + 6 complication codes, 11 inputs): test AUROC 0.9426, largest coefficient `enc_ambulatory`. v0.2 (same label, 7 inputs, dev/test protocol): test AUROC 0.9144. The drop from v0.1 to v0.2 is the part of the signal that came from post-diagnosis care.
+
+**Tests:** 76 pytest tests, all passing (`python -m pytest`).
 
 ## Known limits
 
-- **Synthetic data.** Synthea's disease modules are rule-based; a model trained on them learns those rules. No clinical validity is claimed. Synthea models US (Massachusetts) demographics.
-- **Complication codes are limited to the 6 seen in this cohort.** The full `<<74627003` set has 453 codes; a different cohort could use complication codes not on the list. The DQ report lists any diabetes-related code outside the label (in this run: only prediabetes and hyperglycaemia, which are not diabetes).
-- **Cross-sectional, not predictive.** Features use the whole record, including visits, vitals and medications recorded *after* a diabetes diagnosis. Encounter counts therefore partly measure diabetes follow-up care (reverse causation). Diabetes drugs are excluded from `med_count`, but drugs often co-prescribed with diabetes (e.g. statins, ACE inhibitors) are not, so `med_count` is partly a proxy for being treated.
-- **Prediabetes is common.** 441 patients have Prediabetes `714628002` (307 of them label 0). It is never a feature or a label. The inactive code `15777000` does not occur.
-- **Allowlisted code absent.** `13644009` Hypercholesterolemia does not occur in this cohort; `302870006` Hypertriglyceridemia does (86 patients) but is not on the allowlist, so it is not used.
-- **Small model evaluation.** One split, one model, no threshold tuning, no calibration, no confidence intervals beyond the CV spread.
+- **Synthetic data.** Synthea's disease modules are rule-based; a model trained on them learns those rules. Synthea reproduces demographics well but heterogeneous outcomes poorly (Chen et al. 2019). It models US (Massachusetts) demographics, so it cannot represent Singapore's Chinese / Malay / Indian groups or Asian BMI cut-offs. No clinical validity is claimed.
+- **Association, not prediction.** The label is "ever recorded" and features use the whole record. Removing visit counts and `med_count` removes the most obvious post-diagnosis signal, but `hypertension`, `hyperlipidemia` and the latest BMI / BP can also be recorded after, or changed by, a diabetes diagnosis.
+- **No lifestyle data.** Diet, sugary-drink intake and physical activity — the targets of most prevention policy — are not in EHR-style data, so the model cannot say anything about them.
+- **Complication codes are limited to the 6 seen in this cohort** (full `<<74627003` has 453 codes). The DQ report lists any diabetes-related code outside the label (in this run: only prediabetes and hyperglycaemia).
+- **Prediabetes is common.** 441 patients have Prediabetes `714628002`; it is never a feature or a label.
+- **Allowlisted code absent.** `13644009` Hypercholesterolemia does not occur in this cohort; `302870006` Hypertriglyceridemia does (86 patients) but is not on the allowlist.
+- **Small, single evaluation.** One development / test split; no confidence intervals on test metrics; no formal sample-size calculation (e.g. Riley et al. 2020); no hyperparameter tuning; one model.
 
 ## Later
 
-- Run the same pipeline on **MIMIC-IV Clinical Database Demo v2.2** (100 patients, ODbL, PhysioNet, doi:10.13026/dp1f-ex47) — de-identified real data, as the next step after synthetic.
-- Time-anchored features (only data before an index date, e.g. predict a first diabetes code from earlier records) to remove the reverse-causation signal; full `<<74627003` complication list.
-- Larger cohort, SQL layer (SQLite/DuckDB), notebook walkthrough, more models, threshold tuning, CI.
+- **Prediction framing:** index date, look-back window, exclude people who already have diabetes, predict a first diabetes code within a fixed horizon.
+- **Singapore relevance:** run on Singapore data through approved access; add ethnicity (with subgroup results), Asian BMI bands, waist, lipids; report against TRIPOD+AI.
+- **Real de-identified data:** MIMIC-IV Clinical Database Demo v2.2 (100 patients, ODbL, PhysioNet, doi:10.13026/dp1f-ex47).
+- Bootstrap confidence intervals, a second model (e.g. gradient boosting) under the same protocol, SQL layer, notebook walkthrough, CI.
 
 ## Data and citations
 
 - Synthea (Apache-2.0): Walonoski J, Kramer M, Nichols J, et al. *Synthea: An approach, method, and software mechanism for generating synthetic patients and the synthetic electronic health care record.* J Am Med Inform Assoc. 2018;25(3):230–238. doi:10.1093/jamia/ocx079
+- Chen J, Chun D, Patel M, Chiang E, James J. *The validity of synthetic clinical data: a validation study of a leading synthetic data generator (Synthea) using clinical quality measures.* BMC Med Inform Decis Mak. 2019;19:44. doi:10.1186/s12911-019-0793-0
+- Vickers AJ, Elkin EB. *Decision curve analysis: a novel method for evaluating prediction models.* Med Decis Making. 2006;26(6):565–574.
+- Riley RD, et al. *Calculating the sample size required for developing a clinical prediction model.* BMJ. 2020;368:m441. doi:10.1136/bmj.m441
 - Label code lists, SNOMED CT International Edition 2026-11-01: `pipeline/data/snomed_diabetes_mellitus_descendants.csv` (descendants-or-self of `73211009`) and `pipeline/data/snomed_diabetes_complications_observed.csv` (6 codes under `74627003` found in the cohort). SNOMED CT® is a registered trademark of SNOMED International.
 
 ## License

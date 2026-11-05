@@ -40,6 +40,12 @@ FEATURES = [
     "med_count",
 ]
 
+# v0.2: the model uses only actionable / pre-existing patient characteristics.
+# Encounter counts and med_count stay in the patient table (descriptive) but are NOT model
+# inputs: in an "ever recorded" design they largely measure care received after a diagnosis.
+NOT_MODEL_INPUTS = ["enc_ambulatory", "enc_emergency", "enc_inpatient", "med_count"]
+MODEL_FEATURES = [f for f in FEATURES if f not in NOT_MODEL_INPUTS]
+
 
 class LeakageError(Exception):
     pass
