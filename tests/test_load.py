@@ -27,9 +27,21 @@ def test_missing_file_raises(tmp_path):
         load_tables(tmp_path)
 
 
-def test_missing_column_raises(tmp_path):
+def copy_fixtures(tmp_path):
     for name in TABLES:
         (tmp_path / f"{name}.csv").write_text((FIXTURES / f"{name}.csv").read_text())
+
+
+def test_missing_column_raises(tmp_path):
+    copy_fixtures(tmp_path)
     (tmp_path / "patients.csv").write_text("Id,BIRTHDATE\np1,1960-06-15\n")
     with pytest.raises(PipelineError, match="patients.csv is missing column"):
+        load_tables(tmp_path)
+
+
+@pytest.mark.parametrize("content", [b"", b"\xff\xfe\x00bad bytes\n"])
+def test_unparseable_file_raises(tmp_path, content):
+    copy_fixtures(tmp_path)
+    (tmp_path / "encounters.csv").write_bytes(content)
+    with pytest.raises(PipelineError, match="encounters.csv"):
         load_tables(tmp_path)

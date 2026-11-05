@@ -21,16 +21,19 @@ def load_table(raw_dir, name):
     if not path.is_file():
         raise PipelineError(f"missing input file: {path}")
     columns = TABLES[name]
-    header = pd.read_csv(path, nrows=0).columns
-    missing = [c for c in columns if c not in header]
-    if missing:
-        raise PipelineError(f"{path.name} is missing column(s): {', '.join(missing)}")
-    # Everything as string; clean.py does the typing.
-    return pd.read_csv(path, usecols=columns, dtype=str, keep_default_na=False, na_values=[""])
+    try:
+        header = pd.read_csv(path, nrows=0).columns
+        missing = [c for c in columns if c not in header]
+        if missing:
+            raise PipelineError(f"{path.name} is missing column(s): {', '.join(missing)}")
+        # Everything as string; clean.py does the typing.
+        return pd.read_csv(path, usecols=columns, dtype=str, keep_default_na=False, na_values=[""])
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError) as e:
+        raise PipelineError(f"cannot parse {path.name}: {e}") from e
 
 
 def load_tables(raw_dir):
     raw_dir = Path(raw_dir)
     if not raw_dir.is_dir():
-        raise PipelineError(f"raw directory not found: {raw_dir}")
+        raise PipelineError(f"raw directory not found (or not a directory): {raw_dir}")
     return {name: load_table(raw_dir, name) for name in TABLES}
