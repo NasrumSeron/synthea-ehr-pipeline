@@ -22,7 +22,9 @@ def test_allowlist_has_no_label_codes_or_prediabetes():
     assert not F.ALLOWED_OBSERVATION_CODES & {GLUCOSE, HBA1C}
 
 
-@pytest.mark.parametrize("code", ["44054006", "127013003", "714628002", "302870006"])
+@pytest.mark.parametrize("code", ["44054006", "714628002", "302870006", "80394007",
+                                  "127013003", "90781000119102", "157141000119108",
+                                  "368581000119106", "1551000119108", "97331000119101"])
 def test_condition_accessor_rejects_non_allowlisted(tables, code):
     with pytest.raises(LeakageError):
         F.conditions_with(tables["conditions"], {code})

@@ -1,0 +1,8 @@
+# SNOMED CT International Edition 2026-11-01: the 6 codes under <<74627003 |Complication due to diabetes mellitus| that occur in the v0 Synthea cohort (each has Due to = diabetes mellitus). Checked via SNOMED CT Terminology server (Snowstorm), 5 Nov 2026. Full <<74627003 = 453 codes (not used in v0.1).
+code,display
+127013003,Disorder of kidney due to diabetes mellitus
+90781000119102,Microalbuminuria due to type 2 diabetes mellitus
+157141000119108,Proteinuria due to type 2 diabetes mellitus
+368581000119106,Neuropathy due to type 2 diabetes mellitus
+1551000119108,Nonproliferative retinopathy due to type 2 diabetes mellitus
+97331000119101,Macular edema and retinopathy due to type 2 diabetes mellitus

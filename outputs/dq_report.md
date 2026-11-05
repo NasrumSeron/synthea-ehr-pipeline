@@ -17,16 +17,22 @@ Age reference date for living patients (latest encounter in data): 2026-10-31
 - Patient table rows: 1146 (patients.csv rows: 1146)
 - Duplicate patient IDs in patient table: 0
 
-## Label (diabetes = any condition code in <<73211009, 118 codes)
+## Label (diabetes = any condition code in <<73211009 or one of the observed <<74627003 complication codes; 124 codes)
 
-Label codes that occur in conditions.csv: 2 of 118
+Label codes that occur in conditions.csv: 8 of 124
 
 | code | description | patients |
 |---|---|---|
+| 127013003 | Disorder of kidney due to diabetes mellitus (disorder) | 128 |
+| 90781000119102 | Microalbuminuria due to type 2 diabetes mellitus (disorder) | 104 |
 | 44054006 | Diabetes mellitus type 2 (disorder) | 88 |
+| 157141000119108 | Proteinuria due to type 2 diabetes mellitus (disorder) | 77 |
+| 368581000119106 | Neuropathy due to type 2 diabetes mellitus (disorder) | 24 |
+| 1551000119108 | Nonproliferative diabetic retinopathy due to type II diabetes mellitus | 16 |
 | 427089005 | Diabetes mellitus due to cystic fibrosis (disorder) | 1 |
+| 97331000119101 | Macular edema and retinopathy due to type 2 diabetes mellitus (disorder) | 1 |
 
-- Positive patients: 88 of 1146 (prevalence 0.0768)
+- Positive patients: 182 of 1146 (prevalence 0.1588)
 
 ### Diabetes-related condition codes NOT in the label set
 
@@ -34,16 +40,10 @@ Not used as label or feature. Patients with these codes but no label code are la
 
 | code | description | patients | of which label = 0 |
 |---|---|---|---|
-| 714628002 | Prediabetes (finding) | 441 | 377 |
-| 127013003 | Disorder of kidney due to diabetes mellitus (disorder) | 128 | 94 |
-| 90781000119102 | Microalbuminuria due to type 2 diabetes mellitus (disorder) | 104 | 82 |
-| 157141000119108 | Proteinuria due to type 2 diabetes mellitus (disorder) | 77 | 61 |
+| 714628002 | Prediabetes (finding) | 441 | 307 |
 | 80394007 | Hyperglycemia (disorder) | 44 | 0 |
-| 368581000119106 | Neuropathy due to type 2 diabetes mellitus (disorder) | 24 | 0 |
-| 1551000119108 | Nonproliferative diabetic retinopathy due to type II diabetes mellitus | 16 | 0 |
-| 97331000119101 | Macular edema and retinopathy due to type 2 diabetes mellitus (disorder) | 1 | 0 |
 
-- Patients with a diabetes-complication / hyperglycaemia code (prediabetes excluded) but label = 0: 94
+- Patients with a diabetes-complication / hyperglycaemia code (prediabetes excluded) but label = 0: 0
 
 ### Prediabetes (never a feature)
 
@@ -91,6 +91,6 @@ Not used as label or feature. Patients with these codes but no label code are la
 | sbp_latest | 0.0 | 56.6 | 177.7 | 117.72 |
 | dbp_latest | 0.0 | 26 | 119.5 | 78.9 |
 | med_count | 0.0 | 0 | 31 | 5.65 |
-| diabetes | 0.0 | 0 | 1 | 0.08 |
+| diabetes | 0.0 | 0 | 1 | 0.16 |
 
 Missing values are median-imputed inside the model pipeline (fitted on the training split).

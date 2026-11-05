@@ -1,44 +1,44 @@
 {
   "auroc_cv5_folds": [
-    0.744,
-    0.7442,
-    0.9007,
-    0.7786,
-    0.8339
+    0.9521,
+    0.9362,
+    0.9361,
+    0.9128,
+    0.9008
   ],
-  "auroc_cv5_mean": 0.8002,
-  "auroc_cv5_std": 0.06,
-  "auroc_test": 0.6648,
+  "auroc_cv5_mean": 0.9276,
+  "auroc_cv5_std": 0.0183,
+  "auroc_test": 0.9426,
   "confusion_matrix_test": {
-    "fn": 17,
-    "fp": 4,
-    "tn": 208,
-    "tp": 1
+    "fn": 13,
+    "fp": 10,
+    "tn": 183,
+    "tp": 24
   },
   "model": "LogisticRegression (median impute + standard scale)",
   "n_patients": 1146,
   "n_test": 230,
   "n_train": 916,
-  "prevalence": 0.0768,
-  "prevalence_test": 0.0783,
-  "prevalence_train": 0.0764,
+  "prevalence": 0.1588,
+  "prevalence_test": 0.1609,
+  "prevalence_train": 0.1583,
   "split": {
     "random_state": 42,
     "stratified": true,
     "test_size": 0.2
   },
   "standardized_coefficients": {
-    "age": 0.6564,
-    "bmi_latest": 0.4311,
-    "dbp_latest": 0.0538,
-    "enc_ambulatory": -0.014,
-    "enc_emergency": -0.0196,
-    "enc_inpatient": 0.0803,
-    "hyperlipidemia": 0.0607,
-    "hypertension": 0.2373,
-    "med_count": 0.5995,
-    "sbp_latest": 0.2282,
-    "sex_male": -0.0919
+    "age": 0.8529,
+    "bmi_latest": 0.2575,
+    "dbp_latest": 0.0092,
+    "enc_ambulatory": 0.982,
+    "enc_emergency": 0.5466,
+    "enc_inpatient": -0.0362,
+    "hyperlipidemia": -0.0794,
+    "hypertension": 0.9218,
+    "med_count": 0.3216,
+    "sbp_latest": 0.1748,
+    "sex_male": 0.2027
   },
   "threshold": 0.5
 }

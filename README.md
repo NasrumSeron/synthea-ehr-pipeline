@@ -16,7 +16,7 @@ It is a v0 portfolio project showing ETL, feature engineering with an explicit l
 | Load | `pipeline/load.py` | Reads `patients`, `encounters`, `conditions`, `medications`, `observations` (only the columns used). Missing files or columns give a clear error. |
 | Clean | `pipeline/clean.py` | Trims strings, parses dates, drops exact duplicate rows and rows with no patient ID, coerces observation values to numbers, sorts patients by ID so results don't depend on row order. Logs row counts. |
 | Features | `pipeline/features.py` | 11 columns per patient (below). Condition and observation features can only read codes on an allowlist. |
-| Label | `pipeline/label.py` | `diabetes = 1` if the patient has any condition code in SNOMED CT `<<73211009` (Diabetes mellitus and its 117 descendants, 118 codes). Cross-sectional ("ever recorded"), not prediction over time. |
+| Label | `pipeline/label.py` | `diabetes = 1` if the patient has any condition code in SNOMED CT `<<73211009` (Diabetes mellitus and its 117 descendants, 118 codes) **or** one of the 6 diabetes-complication codes found in the cohort, all under `74627003` *Complication due to diabetes mellitus* (124 codes). Cross-sectional ("ever recorded"), not prediction over time. |
 | Quality | `pipeline/quality.py` | `outputs/dq_report.md`: row counts per step, which label codes occur, diabetes-related codes that are *not* in the label, excluded medications, missing % / min / max per feature. |
 | Model | `pipeline/model.py` | Median impute → standard scale → logistic regression. Stratified 80/20 split, `random_state=42`. Test AUROC, confusion matrix at 0.5, plus 5-fold stratified CV AUROC on all patients. |
 
@@ -64,7 +64,7 @@ Synthea settings: `-p 1000 -s 42 -cs 42 -r 20261101 -e 20261101`, CSV export onl
 
 Outputs: `outputs/dq_report.md` and `outputs/metrics.json` (committed), `outputs/patient_table.csv` (git-ignored).
 
-## Results (v0 run)
+## Results (v0.1 run)
 
 All numbers are copied from [`outputs/metrics.json`](outputs/metrics.json) and [`outputs/dq_report.md`](outputs/dq_report.md).
 
@@ -72,38 +72,40 @@ All numbers are copied from [`outputs/metrics.json`](outputs/metrics.json) and [
 |---|---|
 | Patients (rows in patient table = rows in `patients.csv`) | 1146 |
 | Duplicate patient IDs | 0 |
-| Diabetes-positive (label) | 88 (prevalence 0.0768) |
-| Train / test | 916 / 230 (test prevalence 0.0783) |
-| **Test AUROC** (single 80/20 split) | **0.6648** |
-| 5-fold CV AUROC, mean ± sd | 0.8002 ± 0.06 (folds 0.744, 0.7442, 0.9007, 0.7786, 0.8339) |
-| Confusion matrix, test, threshold 0.5 | TP 1 · FP 4 · FN 17 · TN 208 |
+| Diabetes-positive (label) | 182 (prevalence 0.1588) |
+| Train / test | 916 / 230 (test prevalence 0.1609) |
+| **Test AUROC** (single 80/20 split) | **0.9426** |
+| 5-fold CV AUROC, mean ± sd | 0.9276 ± 0.0183 (folds 0.9521, 0.9362, 0.9361, 0.9128, 0.9008) |
+| Confusion matrix, test, threshold 0.5 | TP 24 · FP 10 · FN 13 · TN 183 |
 | Missing values | `bmi_latest` 2.0 %; all other features 0.0 % |
 
-Largest standardized coefficients: `age` 0.6564, `med_count` 0.5995, `bmi_latest` 0.4311, `hypertension` 0.2373, `sbp_latest` 0.2282.
+Largest standardized coefficients: `enc_ambulatory` 0.982, `hypertension` 0.9218, `age` 0.8529, `enc_emergency` 0.5466, `med_count` 0.3216.
 
-**How to read this.** The test set has only 18 positives, so one split's AUROC is noisy: the CV folds range from 0.744 to 0.9007. At the default 0.5 threshold the model almost never predicts positive (1 of 18 found), which is expected with ~8 % prevalence and no threshold tuning or class weighting. This is a baseline to build on, not a usable classifier, and the patterns it learns are Synthea's simulation rules, not clinical evidence.
+**How to read this.** The high AUROC does **not** mean diabetes can be predicted. The label is "ever recorded" and the features use the whole record, so the strongest signals are things that follow a diagnosis: more ambulatory visits (diabetes follow-up care) and co-recorded hypertension. The model is also learning Synthea's simulation rules, not clinical evidence. At the default 0.5 threshold it finds 24 of 37 test positives; there is no threshold tuning or calibration.
 
-**Tests:** 61 pytest tests, all passing (`python -m pytest`).
+**Label change in v0.1.** v0 labelled only `<<73211009` and missed 94 patients who had a diabetes-complication code (e.g. *Disorder of kidney due to diabetes mellitus*) but no diabetes code; they were labelled 0. v0 results on the same cohort for comparison: 88 positives, test AUROC 0.6648, CV AUROC 0.8002 ± 0.06, TP 1 · FN 17.
+
+**Tests:** 69 pytest tests, all passing (`python -m pytest`).
 
 ## Known limits
 
 - **Synthetic data.** Synthea's disease modules are rule-based; a model trained on them learns those rules. No clinical validity is claimed. Synthea models US (Massachusetts) demographics.
-- **Label misses some patients with diabetes codes.** The label uses only `<<73211009`. In this cohort 94 patients have a diabetes complication code (e.g. `127013003` Disorder of kidney due to diabetes mellitus) but no code under `73211009`, so they are labelled 0. Only 2 of the 118 label codes occur at all. See the DQ report.
-- **Cross-sectional, not predictive.** Features use the whole record, including vitals and medications recorded *after* a diabetes diagnosis. Diabetes drugs are excluded from `med_count`, but drugs often co-prescribed with diabetes (e.g. statins, ACE inhibitors) are not, so `med_count` is partly a proxy for being treated.
-- **Prediabetes is common.** 441 patients have Prediabetes `714628002` (377 of them label 0). It is never a feature. The inactive code `15777000` does not occur.
+- **Complication codes are limited to the 6 seen in this cohort.** The full `<<74627003` set has 453 codes; a different cohort could use complication codes not on the list. The DQ report lists any diabetes-related code outside the label (in this run: only prediabetes and hyperglycaemia, which are not diabetes).
+- **Cross-sectional, not predictive.** Features use the whole record, including visits, vitals and medications recorded *after* a diabetes diagnosis. Encounter counts therefore partly measure diabetes follow-up care (reverse causation). Diabetes drugs are excluded from `med_count`, but drugs often co-prescribed with diabetes (e.g. statins, ACE inhibitors) are not, so `med_count` is partly a proxy for being treated.
+- **Prediabetes is common.** 441 patients have Prediabetes `714628002` (307 of them label 0). It is never a feature or a label. The inactive code `15777000` does not occur.
 - **Allowlisted code absent.** `13644009` Hypercholesterolemia does not occur in this cohort; `302870006` Hypertriglyceridemia does (86 patients) but is not on the allowlist, so it is not used.
 - **Small model evaluation.** One split, one model, no threshold tuning, no calibration, no confidence intervals beyond the CV spread.
 
 ## Later
 
 - Run the same pipeline on **MIMIC-IV Clinical Database Demo v2.2** (100 patients, ODbL, PhysioNet, doi:10.13026/dp1f-ex47) — de-identified real data, as the next step after synthetic.
-- Label that also counts diabetes complication codes; time-anchored features (only data before an index date).
+- Time-anchored features (only data before an index date, e.g. predict a first diabetes code from earlier records) to remove the reverse-causation signal; full `<<74627003` complication list.
 - Larger cohort, SQL layer (SQLite/DuckDB), notebook walkthrough, more models, threshold tuning, CI.
 
 ## Data and citations
 
 - Synthea (Apache-2.0): Walonoski J, Kramer M, Nichols J, et al. *Synthea: An approach, method, and software mechanism for generating synthetic patients and the synthetic electronic health care record.* J Am Med Inform Assoc. 2018;25(3):230–238. doi:10.1093/jamia/ocx079
-- Label code list `pipeline/data/snomed_diabetes_mellitus_descendants.csv`: descendants-or-self of `73211009`, SNOMED CT International Edition 2026-11-01. SNOMED CT® is a registered trademark of SNOMED International.
+- Label code lists, SNOMED CT International Edition 2026-11-01: `pipeline/data/snomed_diabetes_mellitus_descendants.csv` (descendants-or-self of `73211009`) and `pipeline/data/snomed_diabetes_complications_observed.csv` (6 codes under `74627003` found in the cohort). SNOMED CT® is a registered trademark of SNOMED International.
 
 ## License
 

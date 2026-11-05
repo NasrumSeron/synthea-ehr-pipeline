@@ -46,7 +46,8 @@ def build_report(raw_counts, clean_log, tables, patient_table, label, label_code
     out += ["", f"- Patient table rows: {n} (patients.csv rows: {raw_counts['patients']})",
             f"- Duplicate patient IDs in patient table: {dup}", ""]
 
-    out += [f"## Label (diabetes = any condition code in <<73211009, {len(label_codes)} codes)", ""]
+    out += [f"## Label (diabetes = any condition code in <<73211009 or one of the observed "
+            f"<<74627003 complication codes; {len(label_codes)} codes)", ""]
     present = _codes_by_patients(conditions, conditions["CODE"].isin(label_codes))
     out += [f"Label codes that occur in conditions.csv: {len(present)} of {len(label_codes)}", ""]
     out += _table(["code", "description", "patients"], present)
