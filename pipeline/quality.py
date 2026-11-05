@@ -8,14 +8,21 @@ _DIABETES_TEXT = r"diabet|prediab|hyperglyc"
 _HTN_LIPID_TEXT = r"hypertens|lipid|cholesterol|triglycerid"
 
 
+def _cell(value):
+    """Cell text comes from the CSVs: escape pipes and drop newlines so it can't break the table."""
+    return str(value).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
+
+
 def _table(header, rows):
     lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
-    lines += ["| " + " | ".join(str(c) for c in row) + " |" for row in rows]
+    lines += ["| " + " | ".join(_cell(c) for c in row) + " |" for row in rows]
     return lines
 
 
 def _codes_by_patients(conditions, mask):
-    grouped = (conditions[mask].groupby(["CODE", "DESCRIPTION"])["PATIENT"].nunique()
+    """[(code, first description seen, distinct patients)], most patients first."""
+    grouped = (conditions[mask].groupby("CODE", dropna=False)
+               .agg(DESCRIPTION=("DESCRIPTION", "first"), PATIENT=("PATIENT", "nunique"))
                .reset_index().sort_values(["PATIENT", "CODE"], ascending=[False, True]))
     return list(grouped.itertuples(index=False, name=None))
 
@@ -39,7 +46,7 @@ def build_report(raw_counts, clean_log, tables, patient_table, label, label_code
     out += ["", f"- Patient table rows: {n} (patients.csv rows: {raw_counts['patients']})",
             f"- Duplicate patient IDs in patient table: {dup}", ""]
 
-    out += ["## Label (diabetes = any condition code in <<73211009, 118 codes)", ""]
+    out += [f"## Label (diabetes = any condition code in <<73211009, {len(label_codes)} codes)", ""]
     present = _codes_by_patients(conditions, conditions["CODE"].isin(label_codes))
     out += [f"Label codes that occur in conditions.csv: {len(present)} of {len(label_codes)}", ""]
     out += _table(["code", "description", "patients"], present)

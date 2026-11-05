@@ -12,7 +12,7 @@ Age reference date for living patients (latest encounter in data): 2026-10-31
 | encounters | 71918 | 0 | 0 | 71918 |
 | conditions | 41437 | 1 | 0 | 41436 |
 | medications | 58033 | 317 | 0 | 57716 |
-| observations | 943338 | 2670 | 0 | 940668 |
+| observations | 943338 | 2671 | 0 | 940667 |
 
 - Patient table rows: 1146 (patients.csv rows: 1146)
 - Duplicate patient IDs in patient table: 0

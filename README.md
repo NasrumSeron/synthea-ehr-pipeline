@@ -60,7 +60,7 @@ python -m pipeline --raw data/raw/csv --out outputs
 python -m pytest
 ```
 
-Synthea settings: `-p 1000 -s 42 -cs 42 -r 20261101 -e 20261101`, CSV export only. `-p 1000` asks for 1000 living patients; Synthea also writes the patients who died during simulation, so `patients.csv` has 1146 rows. Synthea writes rows in a different order on each run, so the pipeline sorts by patient ID; two independent generations gave byte-identical `metrics.json` and `dq_report.md`.
+Synthea settings: `-p 1000 -s 42 -cs 42 -r 20261101 -e 20261101`, CSV export only. `-p 1000` asks for 1000 living patients; Synthea also writes the patients who died during simulation, so `patients.csv` has 1146 rows. Synthea writes rows in a different order on each run, so the pipeline sorts by patient ID; three independent generations gave byte-identical `metrics.json` and `dq_report.md`.
 
 Outputs: `outputs/dq_report.md` and `outputs/metrics.json` (committed), `outputs/patient_table.csv` (git-ignored).
 
@@ -83,7 +83,7 @@ Largest standardized coefficients: `age` 0.6564, `med_count` 0.5995, `bmi_latest
 
 **How to read this.** The test set has only 18 positives, so one split's AUROC is noisy: the CV folds range from 0.744 to 0.9007. At the default 0.5 threshold the model almost never predicts positive (1 of 18 found), which is expected with ~8 % prevalence and no threshold tuning or class weighting. This is a baseline to build on, not a usable classifier, and the patterns it learns are Synthea's simulation rules, not clinical evidence.
 
-**Tests:** 55 pytest tests, all passing (`python -m pytest`).
+**Tests:** 61 pytest tests, all passing (`python -m pytest`).
 
 ## Known limits
 

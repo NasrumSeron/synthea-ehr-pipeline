@@ -10,7 +10,7 @@ from pipeline.clean import clean_tables
 from pipeline.features import build_features, default_as_of
 from pipeline.label import diabetes_codes, diabetes_label
 from pipeline.load import load_tables
-from pipeline.model import train_and_evaluate
+from pipeline.model import CV_FOLDS, train_and_evaluate
 from pipeline.quality import build_report
 
 
@@ -20,6 +20,8 @@ def run(raw_dir, out_dir):
     tables, clean_log = clean_tables(raw)
 
     as_of = default_as_of(tables)
+    if as_of is None or as_of != as_of:  # None or NaT
+        raise PipelineError("encounters.csv has no parseable START dates")
     X = build_features(tables, as_of)
     codes = diabetes_codes()
     y = diabetes_label(tables["patients"], tables["conditions"], codes)
@@ -27,8 +29,8 @@ def run(raw_dir, out_dir):
 
     if patient_table.index.duplicated().any():
         raise PipelineError("duplicate patient IDs in patients.csv")
-    if y.nunique() < 2 or y.value_counts().min() < 5:
-        raise PipelineError("need at least 5 patients in each label class to train the model")
+    if y.nunique() < 2 or y.value_counts().min() < CV_FOLDS:
+        raise PipelineError(f"need at least {CV_FOLDS} patients in each label class to train the model")
 
     metrics = train_and_evaluate(X, y)
     report = build_report(raw_counts, clean_log, tables, patient_table, y, codes, as_of)
@@ -59,6 +61,9 @@ def main(argv=None):
     except OSError as e:
         print(f"error: {e.strerror or e}: {e.filename or ''}".rstrip(": "), file=sys.stderr)
         return 2
+    except Exception as e:  # anything else: one clear line, no traceback
+        print(f"error: unexpected failure ({type(e).__name__}): {e}", file=sys.stderr)
+        return 1
     cm = metrics["confusion_matrix_test"]
     print(f"patients={metrics['n_patients']} prevalence={metrics['prevalence']} "
           f"AUROC={metrics['auroc_test']} TP={cm['tp']} FP={cm['fp']} FN={cm['fn']} TN={cm['tn']}")

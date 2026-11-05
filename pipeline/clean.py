@@ -25,7 +25,7 @@ def clean_tables(tables):
         entry = {"rows_in": len(df)}
         for col in df.columns:
             if df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
-                df[col] = df[col].str.strip()
+                df[col] = df[col].str.strip().replace("", pd.NA)
         for col in DATE_COLUMNS[name]:
             df[col] = to_date(df[col])
 

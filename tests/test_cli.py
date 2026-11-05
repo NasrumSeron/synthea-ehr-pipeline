@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from pipeline.__main__ import main
+from pipeline.quality import _table
 from tests.conftest import FIXTURES
 
 
@@ -80,3 +81,13 @@ def test_missing_args_shows_usage(capsys):
         main([])
     assert e.value.code == 2
     assert "usage:" in capsys.readouterr().err
+
+
+def test_encounters_without_dates_clear_message(raw_dir, tmp_path, capsys):
+    (raw_dir / "encounters.csv").write_text("Id,START,STOP,PATIENT,ENCOUNTERCLASS\n")
+    assert main(["--raw", str(raw_dir), "--out", str(tmp_path / "o")]) == 2
+    assert "no parseable START dates" in capsys.readouterr().err
+
+
+def test_report_escapes_pipes_in_descriptions():
+    assert _table(["a"], [("x|y\nz",)])[-1] == r"| x\|y z |"

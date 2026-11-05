@@ -12,7 +12,7 @@ TABLES = {
     "encounters": ["Id", "START", "PATIENT", "ENCOUNTERCLASS"],
     "conditions": ["START", "PATIENT", "CODE", "DESCRIPTION"],
     "medications": ["START", "PATIENT", "CODE", "DESCRIPTION"],
-    "observations": ["DATE", "PATIENT", "CODE", "DESCRIPTION", "VALUE"],
+    "observations": ["DATE", "PATIENT", "CODE", "VALUE"],
 }
 
 

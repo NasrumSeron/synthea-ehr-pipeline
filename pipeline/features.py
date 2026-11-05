@@ -1,4 +1,4 @@
-"""Ten patient-level features.
+"""Eleven patient-level feature columns.
 
 Leakage guard is an ALLOWLIST: condition and observation features may only read the codes
 listed below, enforced by the two accessor functions. tests/test_leakage.py checks it.

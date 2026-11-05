@@ -33,3 +33,9 @@ def test_rows_without_patient_id_dropped(raw):
     raw["conditions"].loc[0, "PATIENT"] = None
     _, log = clean_tables(raw)
     assert log["conditions"]["dropped_missing_patient_id"] == 1
+
+
+def test_whitespace_only_patient_id_counts_as_missing(raw):
+    raw["encounters"].loc[0, "PATIENT"] = "   "
+    _, log = clean_tables(raw)
+    assert log["encounters"]["dropped_missing_patient_id"] == 1

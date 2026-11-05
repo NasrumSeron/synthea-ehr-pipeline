@@ -43,3 +43,12 @@ def test_deterministic():
     X, y = synthetic_xy()
     assert json.dumps(train_and_evaluate(X, y), sort_keys=True) == \
         json.dumps(train_and_evaluate(X, y), sort_keys=True)
+
+
+def test_coefficient_names_stay_aligned_when_a_column_is_all_missing():
+    X, y = synthetic_xy()
+    X["b"] = np.nan
+    m = train_and_evaluate(X, y)
+    assert list(m["standardized_coefficients"]) == ["a", "b", "c"]
+    assert m["standardized_coefficients"]["b"] == 0.0
+    assert m["standardized_coefficients"]["a"] > 0
