@@ -3,140 +3,194 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Practitioner's guide · synthea-ehr-pipeline</title>
+<title>synthea-ehr-pipeline: practitioner's guide</title>
 <meta name="description" content="How to run, understand, change and extend a tested EHR modelling pipeline on synthetic data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,800;1,400&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#fbfbf9;--panel:#f2f3ef;--ink:#1c2230;--muted:#5a6272;--line:#dcdfd8;--line-strong:#8b929e;
-  --accent:#0f766e;--accent-weak:#e3f2ef;--code-bg:#f2f3ef;--warn:#9a3412;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --paper:#F3F6F4;      /* clinical form stock */
+  --sheet:#FBFCFB;      /* code and form fields */
+  --ink:#14213D;        /* ballpoint navy */
+  --ink-soft:#4A5872;
+  --rule:#C9D3D0;       /* form grid lines */
+  --rule-soft:#DFE6E3;
+  --head:#E6ECE9;       /* table header tint */
+  --red:#B3261E;        /* red pen: caveats only */
+  --mark:#F2D544;       /* highlighter */
+  --sans:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,"Segoe UI",sans-serif;
+  --mono:"Atkinson Hyperlegible Mono",ui-monospace,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#111419;--panel:#191d24;--ink:#e6e8ec;--muted:#a1a8b4;--line:#2a3039;--line-strong:#7b8390;
-  --accent:#4fd1c5;--accent-weak:rgba(79,209,197,.13);--code-bg:#191d24;--warn:#fdba74;}}
+  --paper:#142030;--sheet:#182638;--ink:#E7EDEF;--ink-soft:#A9B6C6;--rule:#33445A;--rule-soft:#26364A;
+  --head:#1C2C40;--red:#FF8F84;--mark:#C9AE2C;}}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:16px}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-underline-offset:2px}
-header.hero{border-bottom:1px solid var(--line);background:var(--panel)}
-.hero-in{max-width:1120px;margin:0 auto;padding:44px 24px 34px}
-.eyebrow{font:600 13px/1 var(--mono);letter-spacing:.04em;color:var(--accent);text-transform:uppercase}
-h1{font-size:clamp(30px,4.2vw,42px);line-height:1.15;margin:12px 0 10px;letter-spacing:-.01em}
-.lede{font-size:19px;color:var(--muted);max-width:680px;margin:0}
-.pills{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;padding:0;list-style:none}
-.pills li{font:600 13px/1 var(--sans);padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--bg)}
-.pills li.warn{color:var(--warn)}
-.actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
-.btn{display:inline-block;font:600 15px/1 var(--sans);padding:11px 16px;border-radius:8px;border:1px solid var(--accent);text-decoration:none}
-.btn.primary{background:var(--accent);color:var(--bg)}
-.layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
-nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:32px 0}
-nav.toc p{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px}
-nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
-nav.toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:14.5px;line-height:1.35}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17.5px/1.62 var(--sans);font-feature-settings:"kern" 1}
+a{color:inherit;text-decoration-color:var(--ink-soft);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-color:var(--ink)}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+
+/* ---- Header: a filled-in request form ---- */
+.form{border-bottom:2px solid var(--ink);
+  background-image:linear-gradient(var(--rule-soft) 1px,transparent 1px),linear-gradient(90deg,var(--rule-soft) 1px,transparent 1px);
+  background-size:24px 24px;background-position:-1px -1px}
+.form-in{max-width:1120px;margin:0 auto;padding:40px 24px 32px;position:relative}
+.form-top{display:flex;justify-content:space-between;gap:16px;font-size:15px;color:var(--ink-soft);border-bottom:1px solid var(--rule);padding-bottom:10px}
+.form-top b{color:var(--ink);font-weight:600}
+h1{font-weight:800;font-size:clamp(34px,5vw,56px);line-height:1.04;letter-spacing:-.02em;margin:28px 0 10px;max-width:15ch}
+.lede{font-size:19px;max-width:58ch;margin:0 0 26px;color:var(--ink-soft)}
+.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ink);background:var(--sheet);max-width:860px;margin:0}
+.fields div{padding:10px 14px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.fields div:nth-child(3n){border-right:0}
+.fields div:nth-last-child(-n+3){border-bottom:0}
+.fields dt{font-size:13px;color:var(--ink-soft);margin:0 0 2px}
+.fields dd{margin:0;font-weight:600;font-size:16px;line-height:1.35}
+.stamp{position:absolute;right:28px;top:96px;transform:rotate(-7deg);color:var(--red);border:3px double var(--red);
+  padding:10px 16px 8px;font:800 17px/1.15 var(--sans);letter-spacing:.06em;text-align:center;text-transform:uppercase;opacity:.92}
+.stamp small{display:block;font-weight:600;font-size:12px;letter-spacing:.08em}
+.actions{margin-top:26px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-block;background:var(--ink);color:var(--paper);font-weight:600;font-size:16px;padding:12px 20px;text-decoration:none;border-radius:3px}
+.btn:hover{background:var(--ink-soft)}
+
+/* ---- Page layout ---- */
+.layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px}
+nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:36px 0 24px}
+nav.toc h2{all:unset;display:block;font-weight:600;font-size:15px;margin:0 0 10px}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc a{display:grid;grid-template-columns:22px 1fr;padding:4px 0;color:var(--ink-soft);text-decoration:none;font-size:15px;line-height:1.35}
+nav.toc a .n{color:var(--ink-soft)}
 nav.toc a:hover{color:var(--ink)}
-nav.toc a.on{color:var(--ink);border-left-color:var(--accent);font-weight:600}
-main{min-width:0;max-width:780px;padding:20px 0 80px}
-h2{font-size:26px;line-height:1.25;margin:56px 0 14px;padding-top:28px;border-top:1px solid var(--line);letter-spacing:-.005em}
-main>h2:first-child{border-top:0;margin-top:12px}
-h3{font-size:19px;margin:30px 0 8px}
+nav.toc a.on{color:var(--ink);font-weight:600}
+nav.toc a.on .t{background:linear-gradient(transparent 45%,var(--mark) 45%,var(--mark) 88%,transparent 88%)}
+main{min-width:0;max-width:780px;padding:12px 0 96px}
+
+/* ---- Text ---- */
+h2{font-weight:800;font-size:28px;line-height:1.2;letter-spacing:-.01em;margin:64px 0 16px;padding-top:22px;border-top:2px solid var(--ink);display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:baseline}
+h2 .sec{font-weight:400;color:var(--ink-soft);font-size:28px;min-width:1.2em}
+main>h2:first-child{margin-top:28px}
 p,ul,ol{margin:0 0 16px}
-li{margin:4px 0}
-strong{font-weight:650}
+main>ul,main>ol{padding-left:24px}
+li{margin:5px 0}
+strong{font-weight:600}
+em{font-style:italic}
 hr{display:none}
-code{font:0.88em var(--mono);background:var(--code-bg);padding:2px 5px;border-radius:5px;border:1px solid var(--line)}
-pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;margin:0 0 20px}
-pre code{background:none;border:0;padding:0;font-size:14px;line-height:1.6}
-.copy{position:absolute;top:8px;right:8px;font:600 12px/1 var(--sans);padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--muted);cursor:pointer}
-.copy:hover{color:var(--ink)}
-.table-wrap{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:10px}
-table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
-th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
-th{background:var(--panel);font-weight:650;white-space:nowrap}
+code{font:0.9em var(--mono);background:var(--sheet);padding:1px 5px;border:1px solid var(--rule-soft);border-radius:2px}
+pre{position:relative;background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--ink);padding:14px 16px;overflow:auto;margin:0 0 20px}
+pre code{background:none;border:0;padding:0;font-size:14.5px;line-height:1.6}
+.copy{position:absolute;top:6px;right:6px;font:600 13px var(--sans);padding:5px 9px;border:1px solid var(--rule);background:var(--paper);color:var(--ink-soft);cursor:pointer;border-radius:2px}
+.copy:hover{color:var(--ink);border-color:var(--ink-soft)}
+
+/* Tables read like a form */
+.table-wrap{overflow-x:auto;margin:0 0 24px;border:1px solid var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:15px;line-height:1.45;background:var(--sheet)}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+th:last-child,td:last-child{border-right:0}
 tr:last-child td{border-bottom:0}
-td:first-child{font-weight:600}
-blockquote.callout{margin:0 0 22px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-weak);border-radius:0 10px 10px 0}
+th{background:var(--head);font-weight:600;font-size:14px;color:var(--ink-soft)}
+td code{white-space:nowrap;font-size:.86em}
+
+/* Red pen: the one caveat */
+blockquote.callout{margin:0 0 26px;padding:2px 0 2px 18px;border-left:3px solid var(--red)}
 blockquote.callout p{margin:0}
-p.senior{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:15.5px;color:var(--muted)}
-p.senior strong:first-child{color:var(--ink);display:block;font:600 12px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-li.task{list-style:none;margin-left:-22px;display:flex;gap:10px;align-items:flex-start}
-li.task .box{flex:0 0 16px;height:16px;margin-top:5px;border:1.5px solid var(--line-strong);border-radius:4px}
-figure.fig{margin:8px 0 26px;padding:18px 16px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+blockquote.callout strong{color:var(--red)}
+/* Senior notes: set in from the main text */
+p.senior{margin:0 0 20px 0;padding:2px 0 2px 18px;border-left:3px solid var(--rule);color:var(--ink-soft);font-size:16px}
+p.senior strong:first-child{color:var(--ink)}
+/* Tick boxes */
+li.task{list-style:none;margin-left:-24px;display:flex;gap:12px;align-items:flex-start}
+li.task .box{flex:0 0 17px;height:17px;margin-top:4px;border:1.5px solid var(--ink);background:var(--sheet)}
+
+/* Figures */
+figure.fig{margin:6px 0 28px;padding:16px 14px 10px;border:1px solid var(--rule);background:var(--sheet)}
 figure.fig svg{display:block;width:100%;height:auto}
-figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+figcaption{font-size:14.5px;color:var(--ink-soft);margin-top:10px}
+figcaption b{color:var(--ink)}
 .s-title{font:600 15px var(--sans);fill:var(--ink)}
-.s-box{fill:none;stroke:var(--line-strong);stroke-width:1.25}
-.s-accent{fill:var(--accent-weak);stroke:var(--accent);stroke-width:2}
-.s-zone{fill:var(--panel);stroke:var(--line);stroke-width:1}
-.s-zone-label{font:600 12px var(--mono);fill:var(--muted)}
-.s-lines{fill:none;stroke:var(--line-strong);stroke-width:1.25}
+.s-box{fill:none;stroke:var(--ink-soft);stroke-width:1.25}
+.s-accent{fill:var(--mark);fill-opacity:.35;stroke:var(--ink);stroke-width:1.75}
+.s-zone{fill:var(--paper);stroke:var(--rule);stroke-width:1}
+.s-zone-label{font:600 12px var(--mono);fill:var(--ink-soft)}
+.s-lines{fill:none;stroke:var(--ink-soft);stroke-width:1.25}
 .s-dash{stroke-dasharray:4 4}
-.s-head{fill:var(--line-strong)}
-.s-k{font:600 11px var(--mono);fill:var(--muted);text-anchor:middle}
+.s-head{fill:var(--ink-soft)}
+.s-k{font:600 11px var(--mono);fill:var(--ink-soft);text-anchor:middle}
 .s-n{font:600 13px var(--sans);fill:var(--ink);text-anchor:middle}
 .s-n2{font:13px var(--sans);fill:var(--ink);text-anchor:middle}
-.s-sub{font:11.5px var(--sans);fill:var(--muted);text-anchor:middle}
+.s-sub{font:11.5px var(--sans);fill:var(--ink-soft);text-anchor:middle}
 .s-left{text-anchor:start}
 .s-ink{fill:var(--ink)}
-footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px}
-footer div{max-width:1120px;margin:0 auto;padding:22px 24px}
+
+footer{border-top:2px solid var(--ink);font-size:14.5px;color:var(--ink-soft)}
+footer div{max-width:1120px;margin:0 auto;padding:20px 24px 28px}
 details.toc-mobile{display:none}
+@media (max-width:980px){.stamp{position:static;display:inline-block;margin:6px 0 4px}}
 @media (max-width:900px){
   .layout{grid-template-columns:minmax(0,1fr);gap:0;padding:0 16px}
   nav.toc{display:none}
-  details.toc-mobile{display:block;margin:16px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  details.toc-mobile{display:block;margin:20px 0 0;border:1px solid var(--ink);background:var(--sheet)}
   details.toc-mobile summary{cursor:pointer;padding:12px 14px;font-weight:600}
-  details.toc-mobile ol{margin:0;padding:0 14px 12px 34px}
-  .hero-in{padding:32px 16px 26px}
-  body{font-size:16px}
-  h2{font-size:23px}
+  details.toc-mobile ol{list-style:none;margin:0;padding:0 14px 12px}
+  details.toc-mobile a{display:grid;grid-template-columns:22px 1fr;padding:4px 0;text-decoration:none}
+  .form-in{padding:28px 16px 24px}
+  .fields{grid-template-columns:minmax(0,1fr)}
+  .fields div{border-right:0!important;border-bottom:1px solid var(--rule)!important}
+  .fields div:last-child{border-bottom:0!important}
+  body{font-size:16.5px}
+  h2,h2 .sec{font-size:24px}
 }
 </style>
 </head>
 <body>
-<header class="hero"><div class="hero-in">
-  <div class="eyebrow">synthea-ehr-pipeline · practitioner's guide</div>
-  <h1>From first run to a model you can move to new data</h1>
+<header class="form"><div class="form-in">
+  <div class="form-top"><span><b>synthea-ehr-pipeline</b> practitioner's guide</span><span>Version 0.3</span></div>
+  <h1>From a first run to a model you can move to new data</h1>
   <p class="lede">How to run, understand, change and extend a tested EHR modelling pipeline. Written for a first-year data scientist, with notes for seniors on the judgement calls.</p>
-  <ul class="pills"><li class="warn">Synthetic data only · not clinical</li><li>Association, not prediction</li><li>81 tests</li><li>v0.2</li></ul>
-  <div class="actions"><a class="btn primary" id="repo-link" href="../">View the code</a><a class="btn" href="#quick-start">Quick start</a></div>
+  <dl class="fields">
+    <div><dt>Data</dt><dd>Synthea synthetic patients, US-modelled</dd></div>
+    <div><dt>Question</dt><dd>Which characteristics are associated with diabetes</dd></div>
+    <div><dt>Model</dt><dd>Logistic regression, 7 inputs</dd></div>
+    <div><dt>Checks</dt><dd>81 automated tests, security gate passed</dd></div>
+    <div><dt>Evaluation</dt><dd>Development/test split, calibration, external cohort</dd></div>
+    <div><dt>Licence</dt><dd>MIT</dd></div>
+  </dl>
+  <div class="stamp" aria-label="Synthetic data, not for clinical use">Synthetic data<small>Not for clinical use</small></div>
+  <div class="actions"><a class="btn" href="#get-it-running">Get it running</a><a id="repo-link" href="../">View the code on GitHub</a></div>
 </div></header>
 <div class="layout">
-  <nav class="toc" aria-label="Contents"><p>Contents</p><ol>
-<li><a href="#in-60-seconds">In 60 seconds</a></li>
-<li><a href="#quick-start">Quick start</a></li>
-<li><a href="#1-the-map">1. The map</a></li>
-<li><a href="#2-change-one-thing-at-a-time">2. Change one thing at a time</a></li>
-<li><a href="#3-settings-you-can-change">3. Settings you can change</a></li>
-<li><a href="#4-splits-folds-and-seeds">4. Splits, folds and seeds</a></li>
-<li><a href="#5-other-models-and-features">5. Other models and features</a></li>
-<li><a href="#6-calibration-recalibration-and-thresholds">6. Calibration, recalibration and thresholds</a></li>
-<li><a href="#7-freeze-a-model-and-test-it-on-new-data">7. Freeze a model and test it on new data</a></li>
-<li><a href="#8-adapting-it-singapore-other-data-other-diseases-policy">8. Adapting it: Singapore, other data, other diseases, policy</a></li>
-<li><a href="#9-reading-the-outputs">9. Reading the outputs</a></li>
-<li><a href="#10-common-mistakes-and-a-checklist">10. Common mistakes and a checklist</a></li>
-<li><a href="#sources">Sources</a></li>
+  <nav class="toc" aria-label="Contents"><h2>Contents</h2><ol>
+<li><a href="#in-60-seconds"><span class="n"></span><span class="t">In 60 seconds</span></a></li>
+<li><a href="#get-it-running"><span class="n"></span><span class="t">Get it running</span></a></li>
+<li><a href="#1-the-map"><span class="n">1</span><span class="t">The map</span></a></li>
+<li><a href="#2-change-one-thing-at-a-time"><span class="n">2</span><span class="t">Change one thing at a time</span></a></li>
+<li><a href="#3-settings-you-can-change"><span class="n">3</span><span class="t">Settings you can change</span></a></li>
+<li><a href="#4-splits-folds-and-seeds"><span class="n">4</span><span class="t">Splits, folds and seeds</span></a></li>
+<li><a href="#5-other-models-and-features"><span class="n">5</span><span class="t">Other models and features</span></a></li>
+<li><a href="#6-calibration-recalibration-and-thresholds"><span class="n">6</span><span class="t">Calibration, recalibration and thresholds</span></a></li>
+<li><a href="#7-freeze-a-model-and-test-it-on-new-data"><span class="n">7</span><span class="t">Freeze a model and test it on new data</span></a></li>
+<li><a href="#8-adapting-it-singapore-other-data-other-diseases-policy"><span class="n">8</span><span class="t">Adapting it: Singapore, other data, other diseases, policy</span></a></li>
+<li><a href="#9-reading-the-outputs"><span class="n">9</span><span class="t">Reading the outputs</span></a></li>
+<li><a href="#10-common-mistakes-and-a-checklist"><span class="n">10</span><span class="t">Common mistakes and a checklist</span></a></li>
+<li><a href="#sources"><span class="n"></span><span class="t">Sources</span></a></li>
   </ol></nav>
   <main>
     <details class="toc-mobile"><summary>Contents</summary><ol>
-<li><a href="#in-60-seconds">In 60 seconds</a></li>
-<li><a href="#quick-start">Quick start</a></li>
-<li><a href="#1-the-map">1. The map</a></li>
-<li><a href="#2-change-one-thing-at-a-time">2. Change one thing at a time</a></li>
-<li><a href="#3-settings-you-can-change">3. Settings you can change</a></li>
-<li><a href="#4-splits-folds-and-seeds">4. Splits, folds and seeds</a></li>
-<li><a href="#5-other-models-and-features">5. Other models and features</a></li>
-<li><a href="#6-calibration-recalibration-and-thresholds">6. Calibration, recalibration and thresholds</a></li>
-<li><a href="#7-freeze-a-model-and-test-it-on-new-data">7. Freeze a model and test it on new data</a></li>
-<li><a href="#8-adapting-it-singapore-other-data-other-diseases-policy">8. Adapting it: Singapore, other data, other diseases, policy</a></li>
-<li><a href="#9-reading-the-outputs">9. Reading the outputs</a></li>
-<li><a href="#10-common-mistakes-and-a-checklist">10. Common mistakes and a checklist</a></li>
-<li><a href="#sources">Sources</a></li>
+<li><a href="#in-60-seconds"><span class="n"></span><span class="t">In 60 seconds</span></a></li>
+<li><a href="#get-it-running"><span class="n"></span><span class="t">Get it running</span></a></li>
+<li><a href="#1-the-map"><span class="n">1</span><span class="t">The map</span></a></li>
+<li><a href="#2-change-one-thing-at-a-time"><span class="n">2</span><span class="t">Change one thing at a time</span></a></li>
+<li><a href="#3-settings-you-can-change"><span class="n">3</span><span class="t">Settings you can change</span></a></li>
+<li><a href="#4-splits-folds-and-seeds"><span class="n">4</span><span class="t">Splits, folds and seeds</span></a></li>
+<li><a href="#5-other-models-and-features"><span class="n">5</span><span class="t">Other models and features</span></a></li>
+<li><a href="#6-calibration-recalibration-and-thresholds"><span class="n">6</span><span class="t">Calibration, recalibration and thresholds</span></a></li>
+<li><a href="#7-freeze-a-model-and-test-it-on-new-data"><span class="n">7</span><span class="t">Freeze a model and test it on new data</span></a></li>
+<li><a href="#8-adapting-it-singapore-other-data-other-diseases-policy"><span class="n">8</span><span class="t">Adapting it: Singapore, other data, other diseases, policy</span></a></li>
+<li><a href="#9-reading-the-outputs"><span class="n">9</span><span class="t">Reading the outputs</span></a></li>
+<li><a href="#10-common-mistakes-and-a-checklist"><span class="n">10</span><span class="t">Common mistakes and a checklist</span></a></li>
+<li><a href="#sources"><span class="n"></span><span class="t">Sources</span></a></li>
     </ol></details>
-<blockquote class="callout">
-<p><strong>Synthetic data only. Not clinical.</strong> The question the model answers is which recorded patient characteristics are <em>associated</em> with having diabetes in a synthetic cohort. It is not a risk-prediction model.</p>
-</blockquote>
 <hr />
 <h2 id="in-60-seconds">In 60 seconds</h2>
 <div class="table-wrap"><table>
@@ -160,19 +214,112 @@ details.toc-mobile{display:none}
 </tr>
 </tbody>
 </table></div>
-<h2 id="quick-start">Quick start</h2>
-<pre><code class="language-bash">python -m venv .venv
-.venv\Scripts\activate                   # macOS/Linux: source .venv/bin/activate
-pip install -r requirements-toolkit.txt  # pipeline + charts
-python -m pytest -q                      # expect 81 passed
-powershell -File scripts/generate_data.ps1   # macOS/Linux: bash scripts/generate_data.sh
-python -m pipeline --raw data/raw/csv --out runs/baseline
-python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
+<h2 id="get-it-running">Get it running</h2>
+<p>Six steps, about 15 minutes, most of it waiting for downloads. The Windows steps were tested on Windows 11 with Python 3.14.6; the macOS and Linux commands are given but were not tested.</p>
+<p><strong>Step 1. Install what it needs</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+<th>Needed for</th>
+<th>Check it with</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td>3.12 or newer (<a href="https://www.python.org/downloads/">python.org</a>); on Windows, tick <em>Add python.exe to PATH</em> during install</td>
+<td>Everything</td>
+<td><code>python --version</code></td>
+</tr>
+<tr>
+<td>Java</td>
+<td>17 or newer, e.g. Eclipse Temurin (<a href="https://adoptium.net/">adoptium.net</a>)</td>
+<td>Generating the synthetic patients only</td>
+<td><code>java -version</code></td>
+</tr>
+<tr>
+<td>Git</td>
+<td>any</td>
+<td>Only if you clone instead of downloading the ZIP</td>
+<td><code>git --version</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Step 2. Get the code.</strong> Either download it: on the repository page, click <strong>Code → Download ZIP</strong>, then right-click the file and choose <strong>Extract All</strong>. You get a folder called <code>synthea-ehr-pipeline-main</code>. Or clone it:</p>
+<pre><code class="language-bash">git clone https://github.com/&lt;owner&gt;/synthea-ehr-pipeline
 </code></pre>
-<p>You need Python 3.12+ and, for data generation only, Java 17+. The pipeline should print <code>test AUROC=0.9144 AUPRC=0.6088 Brier=0.084 threshold=0.2472</code>. If it does not, stop and find out why before changing anything.</p>
+<p><strong>Step 3. Open a terminal in that folder.</strong> On Windows, open the folder in File Explorer, click the address bar, type <code>powershell</code> and press Enter. On macOS, right-click the folder in Finder and choose <strong>New Terminal at Folder</strong>.</p>
+<p><strong>Step 4. Create a private Python environment and install the packages</strong></p>
+<p>Windows (PowerShell):</p>
+<pre><code class="language-powershell">python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements-toolkit.txt
+.venv\Scripts\python.exe -m pytest -q
+</code></pre>
+<p>macOS / Linux:</p>
+<pre><code class="language-bash">python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-toolkit.txt
+.venv/bin/python -m pytest -q
+</code></pre>
+<p>The last line should end with <strong>81 passed</strong>. The tests use small hand-made patients, so they need neither Java nor real data.</p>
+<p><strong>Step 5. Generate the synthetic patients.</strong> This downloads Synthea v4.0.0 (about 200 MB, checksum-verified) and simulates 1,146 patients into <code>data/raw/csv</code>. It took about a minute per 300 patients on the test PC.</p>
+<pre><code class="language-powershell">powershell -ExecutionPolicy Bypass -File scripts\generate_data.ps1     # Windows
+</code></pre>
+<pre><code class="language-bash">bash scripts/generate_data.sh                                         # macOS / Linux
+</code></pre>
+<p><strong>Step 6. Run the pipeline and draw the charts</strong></p>
+<pre><code class="language-powershell">.venv\Scripts\python.exe -m pipeline --raw data\raw\csv --out runs\baseline
+.venv\Scripts\python.exe toolkit\make_plots.py --out runs\baseline --plots runs\baseline\plots
+start runs\baseline\plots\index.html
+</code></pre>
+<p>On macOS / Linux, use <code>.venv/bin/python</code> and forward slashes, and open the page with <code>open</code> (macOS) or <code>xdg-open</code> (Linux).</p>
+<p>The pipeline should print <code>test AUROC=0.9144 AUPRC=0.6088 Brier=0.084 threshold=0.2472</code>. If yours differs, stop and find out why before changing anything (see the table below).</p>
 <p>Everything you generate goes into <code>runs/</code>, <code>models/</code> or <code>data/cohorts/</code>. Git ignores those folders, so experiments never end up in a commit by accident.</p>
+<p><strong>If something goes wrong</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>You see</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>python is not recognized</code></td>
+<td>Python is not on PATH</td>
+<td>Re-run the installer and tick <em>Add python.exe to PATH</em>, or use <code>py</code> instead of <code>python</code></td>
+</tr>
+<tr>
+<td><code>running scripts is disabled on this system</code></td>
+<td>PowerShell blocks <code>.ps1</code> files by default</td>
+<td>Use the <code>-ExecutionPolicy Bypass</code> form shown in step 5, and call <code>.venv\Scripts\python.exe</code> directly instead of activating</td>
+</tr>
+<tr>
+<td><code>java is not recognized</code></td>
+<td>Java is missing</td>
+<td>Install Java 17+ (step 1), open a new terminal, run step 5 again</td>
+</tr>
+<tr>
+<td><code>checksum mismatch for downloaded jar</code></td>
+<td>The download was cut short or changed</td>
+<td>Delete the <code>tools</code> folder and run step 5 again</td>
+</tr>
+<tr>
+<td>Tests pass but the AUROC differs</td>
+<td>Different data: a different Synthea version, seed or date</td>
+<td>Re-run step 5 unchanged; the script pins version 4.0.0, seeds 42 and the date 1 Nov 2026</td>
+</tr>
+<tr>
+<td><code>error: ...</code> from a toolkit script</td>
+<td>A path or file is wrong</td>
+<td>The message names the file; check it exists</td>
+</tr>
+</tbody>
+</table></div>
 <hr />
-<h2 id="1-the-map">1. The map</h2>
+<h2 id="1-the-map"><span class="sec">1</span>The map</h2>
 <figure class="fig"><svg viewBox="0 0 760 292" role="img" aria-label="One command runs phases B to G; the toolkit adds H to J">
 <defs><marker id="m-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-head"/></marker></defs>
 <text x="16" y="24" class="s-title">One command runs B to G; the toolkit adds H to J</text>
@@ -199,7 +346,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 <g><rect x="339" y="204" width="186" height="48" rx="8" class="s-box"/><text x="432" y="223" class="s-n">I · Robustness</text><text x="432" y="240" class="s-sub">many seeds, read the spread</text></g>
 <g><rect x="540" y="204" width="186" height="48" rx="8" class="s-box"/><text x="633" y="223" class="s-n">J · Freeze &amp; deploy</text><text x="633" y="240" class="s-sub">score new data, recalibrate</text></g>
 <text x="60" y="140" class="s-sub">Synthea, once</text>
-</svg><figcaption>Phases A to J. Data generation runs once; experiments repeat B to J.</figcaption></figure>
+</svg><figcaption><b>Figure 1.</b> Phases A to J. Data generation runs once; experiments repeat B to J.</figcaption></figure>
 
 <div class="table-wrap"><table>
 <thead>
@@ -286,7 +433,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 </table></div>
 <p class="senior"><strong>Senior notes.</strong> Phases B to F are deterministic: the same CSVs give identical outputs. Only phase G uses randomness, fixed by one seed.</p>
 <hr />
-<h2 id="2-change-one-thing-at-a-time">2. Change one thing at a time</h2>
+<h2 id="2-change-one-thing-at-a-time"><span class="sec">2</span>Change one thing at a time</h2>
 <p>Change one thing on a branch, judge it on development data across many splits, and never use the test set to decide.</p>
 <figure class="fig"><svg viewBox="0 0 760 300" role="img" aria-label="Only a change that beats the seed spread moves on to the one-time test">
 <defs><marker id="l-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-head"/></marker></defs>
@@ -310,7 +457,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 <text x="465" y="56" class="s-sub">no: revert, log, try the next idea</text>
 <text x="660" y="206" class="s-sub s-left">yes</text>
 <text x="342" y="184" class="s-sub s-left">new data shows a problem</text>
-</svg><figcaption>The experiment loop. Most time is spent in the top row.</figcaption></figure>
+</svg><figcaption><b>Figure 2.</b> The experiment loop. Most time is spent in the top row.</figcaption></figure>
 <ol>
 <li><strong>Branch:</strong> <code>git switch -c exp/age-spline</code></li>
 <li><strong>Change one thing:</strong> a label list, a feature, a model setting or a split setting (section 3).</li>
@@ -327,7 +474,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 </ul>
 <p class="senior"><strong>Senior notes.</strong> Ten splits of the same patients share most of their data, so their spread understates the real uncertainty. Cohort mode (new patients) or bootstrap intervals (not built) give a firmer answer.</p>
 <hr />
-<h2 id="3-settings-you-can-change">3. Settings you can change</h2>
+<h2 id="3-settings-you-can-change"><span class="sec">3</span>Settings you can change</h2>
 <p><strong>Data generation</strong> (Synthea flags inside <code>scripts/generate_data.*</code>, or run <code>java -jar tools/synthea-with-dependencies.jar ...</code> yourself)</p>
 <div class="table-wrap"><table>
 <thead>
@@ -465,7 +612,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 </tbody>
 </table></div>
 <hr />
-<h2 id="4-splits-folds-and-seeds">4. Splits, folds and seeds</h2>
+<h2 id="4-splits-folds-and-seeds"><span class="sec">4</span>Splits, folds and seeds</h2>
 <p>Size the test set by the number of <em>outcome cases</em> it holds, not by a percentage. Here a 20% test set holds only about 37 diabetes cases.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -516,7 +663,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 </ul>
 <p class="senior"><strong>Senior notes.</strong> scikit-learn prefers 5- or 10-fold CV to leave-one-out. With several rows per patient (visits), use <code>StratifiedGroupKFold</code> with patient as the group. Riley et al. 2020 give formal sample-size criteria for model development.</p>
 <hr />
-<h2 id="5-other-models-and-features">5. Other models and features</h2>
+<h2 id="5-other-models-and-features"><span class="sec">5</span>Other models and features</h2>
 <p>Work in this order: question → label → features → model. Here the label fix moved test AUROC from 0.66 to 0.94, more than any model swap is likely to.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -559,7 +706,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 </ol>
 <p class="senior"><strong>Senior notes.</strong> Choose predictors from clinical knowledge before seeing results; adding or dropping features because of one run tends to overfit.</p>
 <hr />
-<h2 id="6-calibration-recalibration-and-thresholds">6. Calibration, recalibration and thresholds</h2>
+<h2 id="6-calibration-recalibration-and-thresholds"><span class="sec">6</span>Calibration, recalibration and thresholds</h2>
 <p>The model's weights decide <strong>who ranks above whom</strong>. Recalibration corrects <strong>how big the percentages are</strong>. The threshold decides <strong>who gets flagged</strong>. Change them separately.</p>
 <p><strong>Calibration</strong> asks: of the patients given about 20% risk, do about 20 in 100 have diabetes? It is read from a line fitted on the log-odds scale between predicted and actual outcome. Slope <em>b</em> = 1 and intercept <em>a</em> = 0 is perfect; <em>b</em> &lt; 1 means over-confident, <em>a</em> &lt; 0 means risks too high overall.</p>
 <p><strong>Recalibration</strong> applies that line to every prediction <em>p</em>:</p>
@@ -635,7 +782,7 @@ python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
 <p><strong>Thresholds.</strong> The repo uses Youden's J on development data (0.2472), which weighs a missed case and a false alarm equally. For screening, pick the threshold from the decision curve or the real cost of each error. <code>predict.py</code> flags on raw risk at the stored threshold, so recalibration does not change who is flagged.</p>
 <p class="senior"><strong>Senior notes — the updating ladder.</strong> Lightest to heaviest: intercept only → intercept and slope (this toolkit) → re-estimate some weights → full retrain. Climb only as far as the new data's size supports.</p>
 <hr />
-<h2 id="7-freeze-a-model-and-test-it-on-new-data">7. Freeze a model and test it on new data</h2>
+<h2 id="7-freeze-a-model-and-test-it-on-new-data"><span class="sec">7</span>Freeze a model and test it on new data</h2>
 <p>External validation means: train once, freeze, score data the model has never seen — <strong>without retraining</strong>. Cohort mode in <code>multi_seed.py</code> retrains every time, so it is not this test.</p>
 <pre><code class="language-bash">python toolkit/train_final.py --raw data/raw/csv --model models/seed42.json
 python toolkit/multi_seed.py --mode cohort --seeds 7 --population 2000      # makes data/cohorts/p2000_s7
@@ -650,7 +797,7 @@ python toolkit/predict.py --model models/seed42.json --raw data/cohorts/p2000_s7
 </ul>
 <p class="senior"><strong>Senior notes.</strong> Keep the recalibration slice and the check slice apart, as <code>--local-recal</code> does. Learning a/b on all the new data and reporting calibration on that same data overstates the fix.</p>
 <hr />
-<h2 id="8-adapting-it-singapore-other-data-other-diseases-policy">8. Adapting it: Singapore, other data, other diseases, policy</h2>
+<h2 id="8-adapting-it-singapore-other-data-other-diseases-policy"><span class="sec">8</span>Adapting it: Singapore, other data, other diseases, policy</h2>
 <p>The pipeline is a scaffold: load → clean → features → label → quality → model → validate. Each adaptation changes specific files and leaves the rest alone.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -702,7 +849,7 @@ python toolkit/predict.py --model models/seed42.json --raw data/cohorts/p2000_s7
 </table></div>
 <p class="senior"><strong>Senior notes.</strong> For policy, the evidence chain matters: a Singapore trial found the Nutri-Grade label cut sugar <em>purchased</em> from beverages by 1.51 g per serving (Shin et al. 2023). That is an intermediate outcome; linking it to fewer diabetes cases needs further steps this repo does not cover.</p>
 <hr />
-<h2 id="9-reading-the-outputs">9. Reading the outputs</h2>
+<h2 id="9-reading-the-outputs"><span class="sec">9</span>Reading the outputs</h2>
 <p>Read discrimination, calibration and usefulness as three separate questions; a model can pass one and fail another.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -772,7 +919,7 @@ python toolkit/predict.py --model models/seed42.json --raw data/cohorts/p2000_s7
 </table></div>
 <p class="senior"><strong>Senior notes.</strong> For a 0/1 feature, "per SD" is not the odds ratio of having vs not having it. These are adjusted associations inside Synthea's rules: hyperlipidemia triples raw prevalence (13% → 41%) but its adjusted odds ratio is about 1.06, because age explains most of it.</p>
 <hr />
-<h2 id="10-common-mistakes-and-a-checklist">10. Common mistakes and a checklist</h2>
+<h2 id="10-common-mistakes-and-a-checklist"><span class="sec">10</span>Common mistakes and a checklist</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -847,26 +994,34 @@ python toolkit/predict.py --model models/seed42.json --raw data/cohorts/p2000_s7
 </ul>
   </main>
 </div>
-<footer><div>Synthetic data only. Nothing here is clinically validated. Code under the MIT licence. This page is generated from <code>GUIDE.md</code> by <code>docs/build_guide.py</code>.</div></footer>
+<footer><div>Synthetic data only; nothing here is clinically validated. Code under the MIT licence. Set in Atkinson Hyperlegible, a typeface designed by the Braille Institute for readers with low vision. Generated from <code>GUIDE.md</code> by <code>docs/build_guide.py</code>.</div></footer>
 <script>
 (function(){
-  // Repo link: works on GitHub Pages (owner.github.io/repo/) without hard-coding the owner.
-  var h=location.hostname, a=document.getElementById('repo-link');
-  if(/\.github\.io$/.test(h)){var repo=location.pathname.split('/')[1]; a.href='https://github.com/'+h.split('.')[0]+'/'+repo;}
+  // Fill the repository owner on GitHub Pages (owner.github.io/repo/) without hard-coding it.
+  var h=location.hostname;
+  if(/\.github\.io$/.test(h)){
+    var owner=h.split('.')[0], repo=location.pathname.split('/')[1]||'synthea-ehr-pipeline';
+    document.getElementById('repo-link').href='https://github.com/'+owner+'/'+repo;
+    document.querySelectorAll('code').forEach(function(c){
+      if(c.textContent.indexOf('<owner>')>-1){c.textContent=c.textContent.split('<owner>').join(owner);}
+    });
+  }
   // Copy buttons on code blocks.
   document.querySelectorAll('pre').forEach(function(pre){
     var b=document.createElement('button'); b.className='copy'; b.type='button'; b.textContent='Copy';
     b.addEventListener('click',function(){
       var t=pre.querySelector('code').innerText;
-      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)},function(){b.textContent='Select + copy'});
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(
+        function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)},
+        function(){b.textContent='Select and copy'});
     }); pre.appendChild(b);
   });
-  // Highlight the current section in the sidebar.
+  // Mark the section you are reading in the contents.
   var links=[].slice.call(document.querySelectorAll('nav.toc a'));
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
       links.forEach(function(l){l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id)});}})},{rootMargin:'0px 0px -75% 0px'});
-    document.querySelectorAll('main h2[id]').forEach(function(h){io.observe(h)});
+    document.querySelectorAll('main h2[id]').forEach(function(x){io.observe(x)});
   }
 })();
 </script>

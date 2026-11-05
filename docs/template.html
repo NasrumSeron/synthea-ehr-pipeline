@@ -3,107 +3,164 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Practitioner's guide · synthea-ehr-pipeline</title>
+<title>synthea-ehr-pipeline: practitioner's guide</title>
 <meta name="description" content="How to run, understand, change and extend a tested EHR modelling pipeline on synthetic data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,800;1,400&family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#fbfbf9;--panel:#f2f3ef;--ink:#1c2230;--muted:#5a6272;--line:#dcdfd8;--line-strong:#8b929e;
-  --accent:#0f766e;--accent-weak:#e3f2ef;--code-bg:#f2f3ef;--warn:#9a3412;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --paper:#F3F6F4;      /* clinical form stock */
+  --sheet:#FBFCFB;      /* code and form fields */
+  --ink:#14213D;        /* ballpoint navy */
+  --ink-soft:#4A5872;
+  --rule:#C9D3D0;       /* form grid lines */
+  --rule-soft:#DFE6E3;
+  --head:#E6ECE9;       /* table header tint */
+  --red:#B3261E;        /* red pen: caveats only */
+  --mark:#F2D544;       /* highlighter */
+  --sans:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,"Segoe UI",sans-serif;
+  --mono:"Atkinson Hyperlegible Mono",ui-monospace,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#111419;--panel:#191d24;--ink:#e6e8ec;--muted:#a1a8b4;--line:#2a3039;--line-strong:#7b8390;
-  --accent:#4fd1c5;--accent-weak:rgba(79,209,197,.13);--code-bg:#191d24;--warn:#fdba74;}}
+  --paper:#142030;--sheet:#182638;--ink:#E7EDEF;--ink-soft:#A9B6C6;--rule:#33445A;--rule-soft:#26364A;
+  --head:#1C2C40;--red:#FF8F84;--mark:#C9AE2C;}}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:16px}
-body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-underline-offset:2px}
-header.hero{border-bottom:1px solid var(--line);background:var(--panel)}
-.hero-in{max-width:1120px;margin:0 auto;padding:44px 24px 34px}
-.eyebrow{font:600 13px/1 var(--mono);letter-spacing:.04em;color:var(--accent);text-transform:uppercase}
-h1{font-size:clamp(30px,4.2vw,42px);line-height:1.15;margin:12px 0 10px;letter-spacing:-.01em}
-.lede{font-size:19px;color:var(--muted);max-width:680px;margin:0}
-.pills{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;padding:0;list-style:none}
-.pills li{font:600 13px/1 var(--sans);padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--bg)}
-.pills li.warn{color:var(--warn)}
-.actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
-.btn{display:inline-block;font:600 15px/1 var(--sans);padding:11px 16px;border-radius:8px;border:1px solid var(--accent);text-decoration:none}
-.btn.primary{background:var(--accent);color:var(--bg)}
-.layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
-nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:32px 0}
-nav.toc p{font:600 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px}
-nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line)}
-nav.toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:14.5px;line-height:1.35}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17.5px/1.62 var(--sans);font-feature-settings:"kern" 1}
+a{color:inherit;text-decoration-color:var(--ink-soft);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-color:var(--ink)}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+
+/* ---- Header: a filled-in request form ---- */
+.form{border-bottom:2px solid var(--ink);
+  background-image:linear-gradient(var(--rule-soft) 1px,transparent 1px),linear-gradient(90deg,var(--rule-soft) 1px,transparent 1px);
+  background-size:24px 24px;background-position:-1px -1px}
+.form-in{max-width:1120px;margin:0 auto;padding:40px 24px 32px;position:relative}
+.form-top{display:flex;justify-content:space-between;gap:16px;font-size:15px;color:var(--ink-soft);border-bottom:1px solid var(--rule);padding-bottom:10px}
+.form-top b{color:var(--ink);font-weight:600}
+h1{font-weight:800;font-size:clamp(34px,5vw,56px);line-height:1.04;letter-spacing:-.02em;margin:28px 0 10px;max-width:15ch}
+.lede{font-size:19px;max-width:58ch;margin:0 0 26px;color:var(--ink-soft)}
+.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ink);background:var(--sheet);max-width:860px;margin:0}
+.fields div{padding:10px 14px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.fields div:nth-child(3n){border-right:0}
+.fields div:nth-last-child(-n+3){border-bottom:0}
+.fields dt{font-size:13px;color:var(--ink-soft);margin:0 0 2px}
+.fields dd{margin:0;font-weight:600;font-size:16px;line-height:1.35}
+.stamp{position:absolute;right:28px;top:96px;transform:rotate(-7deg);color:var(--red);border:3px double var(--red);
+  padding:10px 16px 8px;font:800 17px/1.15 var(--sans);letter-spacing:.06em;text-align:center;text-transform:uppercase;opacity:.92}
+.stamp small{display:block;font-weight:600;font-size:12px;letter-spacing:.08em}
+.actions{margin-top:26px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-block;background:var(--ink);color:var(--paper);font-weight:600;font-size:16px;padding:12px 20px;text-decoration:none;border-radius:3px}
+.btn:hover{background:var(--ink-soft)}
+
+/* ---- Page layout ---- */
+.layout{max-width:1120px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px}
+nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:36px 0 24px}
+nav.toc h2{all:unset;display:block;font-weight:600;font-size:15px;margin:0 0 10px}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc a{display:grid;grid-template-columns:22px 1fr;padding:4px 0;color:var(--ink-soft);text-decoration:none;font-size:15px;line-height:1.35}
+nav.toc a .n{color:var(--ink-soft)}
 nav.toc a:hover{color:var(--ink)}
-nav.toc a.on{color:var(--ink);border-left-color:var(--accent);font-weight:600}
-main{min-width:0;max-width:780px;padding:20px 0 80px}
-h2{font-size:26px;line-height:1.25;margin:56px 0 14px;padding-top:28px;border-top:1px solid var(--line);letter-spacing:-.005em}
-main>h2:first-child{border-top:0;margin-top:12px}
-h3{font-size:19px;margin:30px 0 8px}
+nav.toc a.on{color:var(--ink);font-weight:600}
+nav.toc a.on .t{background:linear-gradient(transparent 45%,var(--mark) 45%,var(--mark) 88%,transparent 88%)}
+main{min-width:0;max-width:780px;padding:12px 0 96px}
+
+/* ---- Text ---- */
+h2{font-weight:800;font-size:28px;line-height:1.2;letter-spacing:-.01em;margin:64px 0 16px;padding-top:22px;border-top:2px solid var(--ink);display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:baseline}
+h2 .sec{font-weight:400;color:var(--ink-soft);font-size:28px;min-width:1.2em}
+main>h2:first-child{margin-top:28px}
 p,ul,ol{margin:0 0 16px}
-li{margin:4px 0}
-strong{font-weight:650}
+main>ul,main>ol{padding-left:24px}
+li{margin:5px 0}
+strong{font-weight:600}
+em{font-style:italic}
 hr{display:none}
-code{font:0.88em var(--mono);background:var(--code-bg);padding:2px 5px;border-radius:5px;border:1px solid var(--line)}
-pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;margin:0 0 20px}
-pre code{background:none;border:0;padding:0;font-size:14px;line-height:1.6}
-.copy{position:absolute;top:8px;right:8px;font:600 12px/1 var(--sans);padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--muted);cursor:pointer}
-.copy:hover{color:var(--ink)}
-.table-wrap{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:10px}
-table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.5}
-th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
-th{background:var(--panel);font-weight:650;white-space:nowrap}
+code{font:0.9em var(--mono);background:var(--sheet);padding:1px 5px;border:1px solid var(--rule-soft);border-radius:2px}
+pre{position:relative;background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--ink);padding:14px 16px;overflow:auto;margin:0 0 20px}
+pre code{background:none;border:0;padding:0;font-size:14.5px;line-height:1.6}
+.copy{position:absolute;top:6px;right:6px;font:600 13px var(--sans);padding:5px 9px;border:1px solid var(--rule);background:var(--paper);color:var(--ink-soft);cursor:pointer;border-radius:2px}
+.copy:hover{color:var(--ink);border-color:var(--ink-soft)}
+
+/* Tables read like a form */
+.table-wrap{overflow-x:auto;margin:0 0 24px;border:1px solid var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:15px;line-height:1.45;background:var(--sheet)}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+th:last-child,td:last-child{border-right:0}
 tr:last-child td{border-bottom:0}
-td:first-child{font-weight:600}
-blockquote.callout{margin:0 0 22px;padding:14px 18px;border-left:4px solid var(--accent);background:var(--accent-weak);border-radius:0 10px 10px 0}
+th{background:var(--head);font-weight:600;font-size:14px;color:var(--ink-soft)}
+td code{white-space:nowrap;font-size:.86em}
+
+/* Red pen: the one caveat */
+blockquote.callout{margin:0 0 26px;padding:2px 0 2px 18px;border-left:3px solid var(--red)}
 blockquote.callout p{margin:0}
-p.senior{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:15.5px;color:var(--muted)}
-p.senior strong:first-child{color:var(--ink);display:block;font:600 12px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-li.task{list-style:none;margin-left:-22px;display:flex;gap:10px;align-items:flex-start}
-li.task .box{flex:0 0 16px;height:16px;margin-top:5px;border:1.5px solid var(--line-strong);border-radius:4px}
-figure.fig{margin:8px 0 26px;padding:18px 16px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+blockquote.callout strong{color:var(--red)}
+/* Senior notes: set in from the main text */
+p.senior{margin:0 0 20px 0;padding:2px 0 2px 18px;border-left:3px solid var(--rule);color:var(--ink-soft);font-size:16px}
+p.senior strong:first-child{color:var(--ink)}
+/* Tick boxes */
+li.task{list-style:none;margin-left:-24px;display:flex;gap:12px;align-items:flex-start}
+li.task .box{flex:0 0 17px;height:17px;margin-top:4px;border:1.5px solid var(--ink);background:var(--sheet)}
+
+/* Figures */
+figure.fig{margin:6px 0 28px;padding:16px 14px 10px;border:1px solid var(--rule);background:var(--sheet)}
 figure.fig svg{display:block;width:100%;height:auto}
-figcaption{font-size:14px;color:var(--muted);margin-top:8px}
+figcaption{font-size:14.5px;color:var(--ink-soft);margin-top:10px}
+figcaption b{color:var(--ink)}
 .s-title{font:600 15px var(--sans);fill:var(--ink)}
-.s-box{fill:none;stroke:var(--line-strong);stroke-width:1.25}
-.s-accent{fill:var(--accent-weak);stroke:var(--accent);stroke-width:2}
-.s-zone{fill:var(--panel);stroke:var(--line);stroke-width:1}
-.s-zone-label{font:600 12px var(--mono);fill:var(--muted)}
-.s-lines{fill:none;stroke:var(--line-strong);stroke-width:1.25}
+.s-box{fill:none;stroke:var(--ink-soft);stroke-width:1.25}
+.s-accent{fill:var(--mark);fill-opacity:.35;stroke:var(--ink);stroke-width:1.75}
+.s-zone{fill:var(--paper);stroke:var(--rule);stroke-width:1}
+.s-zone-label{font:600 12px var(--mono);fill:var(--ink-soft)}
+.s-lines{fill:none;stroke:var(--ink-soft);stroke-width:1.25}
 .s-dash{stroke-dasharray:4 4}
-.s-head{fill:var(--line-strong)}
-.s-k{font:600 11px var(--mono);fill:var(--muted);text-anchor:middle}
+.s-head{fill:var(--ink-soft)}
+.s-k{font:600 11px var(--mono);fill:var(--ink-soft);text-anchor:middle}
 .s-n{font:600 13px var(--sans);fill:var(--ink);text-anchor:middle}
 .s-n2{font:13px var(--sans);fill:var(--ink);text-anchor:middle}
-.s-sub{font:11.5px var(--sans);fill:var(--muted);text-anchor:middle}
+.s-sub{font:11.5px var(--sans);fill:var(--ink-soft);text-anchor:middle}
 .s-left{text-anchor:start}
 .s-ink{fill:var(--ink)}
-footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px}
-footer div{max-width:1120px;margin:0 auto;padding:22px 24px}
+
+footer{border-top:2px solid var(--ink);font-size:14.5px;color:var(--ink-soft)}
+footer div{max-width:1120px;margin:0 auto;padding:20px 24px 28px}
 details.toc-mobile{display:none}
+@media (max-width:980px){.stamp{position:static;display:inline-block;margin:6px 0 4px}}
 @media (max-width:900px){
   .layout{grid-template-columns:minmax(0,1fr);gap:0;padding:0 16px}
   nav.toc{display:none}
-  details.toc-mobile{display:block;margin:16px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  details.toc-mobile{display:block;margin:20px 0 0;border:1px solid var(--ink);background:var(--sheet)}
   details.toc-mobile summary{cursor:pointer;padding:12px 14px;font-weight:600}
-  details.toc-mobile ol{margin:0;padding:0 14px 12px 34px}
-  .hero-in{padding:32px 16px 26px}
-  body{font-size:16px}
-  h2{font-size:23px}
+  details.toc-mobile ol{list-style:none;margin:0;padding:0 14px 12px}
+  details.toc-mobile a{display:grid;grid-template-columns:22px 1fr;padding:4px 0;text-decoration:none}
+  .form-in{padding:28px 16px 24px}
+  .fields{grid-template-columns:minmax(0,1fr)}
+  .fields div{border-right:0!important;border-bottom:1px solid var(--rule)!important}
+  .fields div:last-child{border-bottom:0!important}
+  body{font-size:16.5px}
+  h2,h2 .sec{font-size:24px}
 }
 </style>
 </head>
 <body>
-<header class="hero"><div class="hero-in">
-  <div class="eyebrow">synthea-ehr-pipeline · practitioner's guide</div>
-  <h1>From first run to a model you can move to new data</h1>
+<header class="form"><div class="form-in">
+  <div class="form-top"><span><b>synthea-ehr-pipeline</b> practitioner's guide</span><span>Version 0.3</span></div>
+  <h1>From a first run to a model you can move to new data</h1>
   <p class="lede">How to run, understand, change and extend a tested EHR modelling pipeline. Written for a first-year data scientist, with notes for seniors on the judgement calls.</p>
-  <ul class="pills"><li class="warn">Synthetic data only · not clinical</li><li>Association, not prediction</li><li>81 tests</li><li>v0.2</li></ul>
-  <div class="actions"><a class="btn primary" id="repo-link" href="../">View the code</a><a class="btn" href="#quick-start">Quick start</a></div>
+  <dl class="fields">
+    <div><dt>Data</dt><dd>Synthea synthetic patients, US-modelled</dd></div>
+    <div><dt>Question</dt><dd>Which characteristics are associated with diabetes</dd></div>
+    <div><dt>Model</dt><dd>Logistic regression, 7 inputs</dd></div>
+    <div><dt>Checks</dt><dd>81 automated tests, security gate passed</dd></div>
+    <div><dt>Evaluation</dt><dd>Development/test split, calibration, external cohort</dd></div>
+    <div><dt>Licence</dt><dd>MIT</dd></div>
+  </dl>
+  <div class="stamp" aria-label="Synthetic data, not for clinical use">Synthetic data<small>Not for clinical use</small></div>
+  <div class="actions"><a class="btn" href="#get-it-running">Get it running</a><a id="repo-link" href="../">View the code on GitHub</a></div>
 </div></header>
 <div class="layout">
-  <nav class="toc" aria-label="Contents"><p>Contents</p><ol>
+  <nav class="toc" aria-label="Contents"><h2>Contents</h2><ol>
 {{TOC}}
   </ol></nav>
   <main>
@@ -113,26 +170,34 @@ details.toc-mobile{display:none}
 {{BODY}}
   </main>
 </div>
-<footer><div>Synthetic data only. Nothing here is clinically validated. Code under the MIT licence. This page is generated from <code>GUIDE.md</code> by <code>docs/build_guide.py</code>.</div></footer>
+<footer><div>Synthetic data only; nothing here is clinically validated. Code under the MIT licence. Set in Atkinson Hyperlegible, a typeface designed by the Braille Institute for readers with low vision. Generated from <code>GUIDE.md</code> by <code>docs/build_guide.py</code>.</div></footer>
 <script>
 (function(){
-  // Repo link: works on GitHub Pages (owner.github.io/repo/) without hard-coding the owner.
-  var h=location.hostname, a=document.getElementById('repo-link');
-  if(/\.github\.io$/.test(h)){var repo=location.pathname.split('/')[1]; a.href='https://github.com/'+h.split('.')[0]+'/'+repo;}
+  // Fill the repository owner on GitHub Pages (owner.github.io/repo/) without hard-coding it.
+  var h=location.hostname;
+  if(/\.github\.io$/.test(h)){
+    var owner=h.split('.')[0], repo=location.pathname.split('/')[1]||'synthea-ehr-pipeline';
+    document.getElementById('repo-link').href='https://github.com/'+owner+'/'+repo;
+    document.querySelectorAll('code').forEach(function(c){
+      if(c.textContent.indexOf('<owner>')>-1){c.textContent=c.textContent.split('<owner>').join(owner);}
+    });
+  }
   // Copy buttons on code blocks.
   document.querySelectorAll('pre').forEach(function(pre){
     var b=document.createElement('button'); b.className='copy'; b.type='button'; b.textContent='Copy';
     b.addEventListener('click',function(){
       var t=pre.querySelector('code').innerText;
-      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)},function(){b.textContent='Select + copy'});
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(
+        function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)},
+        function(){b.textContent='Select and copy'});
     }); pre.appendChild(b);
   });
-  // Highlight the current section in the sidebar.
+  // Mark the section you are reading in the contents.
   var links=[].slice.call(document.querySelectorAll('nav.toc a'));
   if('IntersectionObserver' in window){
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
       links.forEach(function(l){l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id)});}})},{rootMargin:'0px 0px -75% 0px'});
-    document.querySelectorAll('main h2[id]').forEach(function(h){io.observe(h)});
+    document.querySelectorAll('main h2[id]').forEach(function(x){io.observe(x)});
   }
 })();
 </script>

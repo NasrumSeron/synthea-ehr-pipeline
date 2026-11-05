@@ -3,7 +3,7 @@
     pip install markdown          # build-time only; not needed to run the pipeline
     python docs/build_guide.py
 
-The page is self-contained: no external scripts, fonts or trackers.
+The page loads its typeface (Atkinson Hyperlegible) from Google Fonts; no other external scripts or trackers.
 """
 
 import html
@@ -43,7 +43,7 @@ MAP_SVG = """<figure class="fig"><svg viewBox="0 0 760 292" role="img" aria-labe
 <g><rect x="339" y="204" width="186" height="48" rx="8" class="s-box"/><text x="432" y="223" class="s-n">I · Robustness</text><text x="432" y="240" class="s-sub">many seeds, read the spread</text></g>
 <g><rect x="540" y="204" width="186" height="48" rx="8" class="s-box"/><text x="633" y="223" class="s-n">J · Freeze &amp; deploy</text><text x="633" y="240" class="s-sub">score new data, recalibrate</text></g>
 <text x="60" y="140" class="s-sub">Synthea, once</text>
-</svg><figcaption>Phases A to J. Data generation runs once; experiments repeat B to J.</figcaption></figure>"""
+</svg><figcaption><b>Figure 1.</b> Phases A to J. Data generation runs once; experiments repeat B to J.</figcaption></figure>"""
 
 LOOP_SVG = """<figure class="fig"><svg viewBox="0 0 760 300" role="img" aria-label="Only a change that beats the seed spread moves on to the one-time test">
 <defs><marker id="l-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="s-head"/></marker></defs>
@@ -67,7 +67,7 @@ LOOP_SVG = """<figure class="fig"><svg viewBox="0 0 760 300" role="img" aria-lab
 <text x="465" y="56" class="s-sub">no: revert, log, try the next idea</text>
 <text x="660" y="206" class="s-sub s-left">yes</text>
 <text x="342" y="184" class="s-sub s-left">new data shows a problem</text>
-</svg><figcaption>The experiment loop. Most time is spent in the top row.</figcaption></figure>"""
+</svg><figcaption><b>Figure 2.</b> The experiment loop. Most time is spent in the top row.</figcaption></figure>"""
 
 
 def build():
@@ -82,6 +82,8 @@ def build():
     body = conv.convert(md_text)
     # The hero already carries the intro sentence; drop the first paragraph. Hide header rows with no words.
     body = re.sub(r"\A\s*<p>How to run.*?</p>\s*", "", body, flags=re.S)
+    # The header's stamp carries the synthetic-data caveat; drop the opening blockquote that repeats it.
+    body = re.sub(r"\A\s*<blockquote>.*?</blockquote>\s*", "", body, flags=re.S)
     body = re.sub(r"<thead>\s*<tr>\s*(?:<th></th>\s*)+</tr>\s*</thead>", "", body)
     body = body.replace("<p><!--MAP--></p>", MAP_SVG).replace("<!--MAP-->", MAP_SVG)
     # Experiment-loop drawing before the numbered steps of section 2.
@@ -91,7 +93,14 @@ def build():
     body = body.replace("<blockquote>", '<blockquote class="callout">')
     body = body.replace("<table>", '<div class="table-wrap"><table>').replace("</table>", "</table></div>")
     body = body.replace("<p><strong>Senior notes", '<p class="senior"><strong>Senior notes')
-    toc = "\n".join(f'<li><a href="#{t["id"]}">{html.escape(t["name"])}</a></li>' for t in conv.toc_tokens)
+    def split_num(name):
+        m = re.match(r"(\d+)\.\s+(.*)", name)
+        return (m.group(1), m.group(2)) if m else ("", name)
+    toc = "\n".join(
+        f'<li><a href="#{t["id"]}"><span class="n">{n}</span><span class="t">{html.escape(x)}</span></a></li>'
+        for t in conv.toc_tokens for n, x in [split_num(t["name"])])
+    # Section numbers hang in their own column.
+    body = re.sub(r'<h2 id="([^"]+)">(\d+)\.\s+', r'<h2 id="\1"><span class="sec">\2</span>', body)
     page = TPL.read_text(encoding="utf-8").replace("{{TOC}}", toc).replace("{{BODY}}", body)
     OUT.write_text(page, encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(page):,} bytes)")

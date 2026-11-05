@@ -18,21 +18,80 @@ A formatted version of this guide is in [`docs/index.html`](docs/index.html) (al
 | **What it is not** | Clinical evidence, a Singapore model, or a prediction model (yet) |
 | **Time to first result** | About 15 minutes |
 
-## Quick start
+## Get it running
+
+Six steps, about 15 minutes, most of it waiting for downloads. The Windows steps were tested on Windows 11 with Python 3.14.6; the macOS and Linux commands are given but were not tested.
+
+**Step 1. Install what it needs**
+
+| Tool | Version | Needed for | Check it with |
+|---|---|---|---|
+| Python | 3.12 or newer ([python.org](https://www.python.org/downloads/)); on Windows, tick *Add python.exe to PATH* during install | Everything | `python --version` |
+| Java | 17 or newer, e.g. Eclipse Temurin ([adoptium.net](https://adoptium.net/)) | Generating the synthetic patients only | `java -version` |
+| Git | any | Only if you clone instead of downloading the ZIP | `git --version` |
+
+**Step 2. Get the code.** Either download it: on the repository page, click **Code → Download ZIP**, then right-click the file and choose **Extract All**. You get a folder called `synthea-ehr-pipeline-main`. Or clone it:
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate                   # macOS/Linux: source .venv/bin/activate
-pip install -r requirements-toolkit.txt  # pipeline + charts
-python -m pytest -q                      # expect 81 passed
-powershell -File scripts/generate_data.ps1   # macOS/Linux: bash scripts/generate_data.sh
-python -m pipeline --raw data/raw/csv --out runs/baseline
-python toolkit/make_plots.py --out runs/baseline --plots runs/baseline/plots
+git clone https://github.com/<owner>/synthea-ehr-pipeline
 ```
 
-You need Python 3.12+ and, for data generation only, Java 17+. The pipeline should print `test AUROC=0.9144 AUPRC=0.6088 Brier=0.084 threshold=0.2472`. If it does not, stop and find out why before changing anything.
+**Step 3. Open a terminal in that folder.** On Windows, open the folder in File Explorer, click the address bar, type `powershell` and press Enter. On macOS, right-click the folder in Finder and choose **New Terminal at Folder**.
+
+**Step 4. Create a private Python environment and install the packages**
+
+Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements-toolkit.txt
+.venv\Scripts\python.exe -m pytest -q
+```
+
+macOS / Linux:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-toolkit.txt
+.venv/bin/python -m pytest -q
+```
+
+The last line should end with **81 passed**. The tests use small hand-made patients, so they need neither Java nor real data.
+
+**Step 5. Generate the synthetic patients.** This downloads Synthea v4.0.0 (about 200 MB, checksum-verified) and simulates 1,146 patients into `data/raw/csv`. It took about a minute per 300 patients on the test PC.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\generate_data.ps1     # Windows
+```
+
+```bash
+bash scripts/generate_data.sh                                         # macOS / Linux
+```
+
+**Step 6. Run the pipeline and draw the charts**
+
+```powershell
+.venv\Scripts\python.exe -m pipeline --raw data\raw\csv --out runs\baseline
+.venv\Scripts\python.exe toolkit\make_plots.py --out runs\baseline --plots runs\baseline\plots
+start runs\baseline\plots\index.html
+```
+
+On macOS / Linux, use `.venv/bin/python` and forward slashes, and open the page with `open` (macOS) or `xdg-open` (Linux).
+
+The pipeline should print `test AUROC=0.9144 AUPRC=0.6088 Brier=0.084 threshold=0.2472`. If yours differs, stop and find out why before changing anything (see the table below).
 
 Everything you generate goes into `runs/`, `models/` or `data/cohorts/`. Git ignores those folders, so experiments never end up in a commit by accident.
+
+**If something goes wrong**
+
+| You see | Cause | Fix |
+|---|---|---|
+| `python is not recognized` | Python is not on PATH | Re-run the installer and tick *Add python.exe to PATH*, or use `py` instead of `python` |
+| `running scripts is disabled on this system` | PowerShell blocks `.ps1` files by default | Use the `-ExecutionPolicy Bypass` form shown in step 5, and call `.venv\Scripts\python.exe` directly instead of activating |
+| `java is not recognized` | Java is missing | Install Java 17+ (step 1), open a new terminal, run step 5 again |
+| `checksum mismatch for downloaded jar` | The download was cut short or changed | Delete the `tools` folder and run step 5 again |
+| Tests pass but the AUROC differs | Different data: a different Synthea version, seed or date | Re-run step 5 unchanged; the script pins version 4.0.0, seeds 42 and the date 1 Nov 2026 |
+| `error: ...` from a toolkit script | A path or file is wrong | The message names the file; check it exists |
 
 ---
 
