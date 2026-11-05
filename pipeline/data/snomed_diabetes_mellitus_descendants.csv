@@ -1,0 +1,120 @@
+# SNOMED CT International Edition 2026-11-01: <<73211009 |Diabetes mellitus| (118 codes), pulled via SNOMED CT Terminology server (Snowstorm), 5 Nov 2026.
+code,display
+73211009,Diabetes mellitus
+44054006,Type 2 diabetes mellitus
+46635009,Type 1 diabetes mellitus
+530558861000132104,Atypical diabetes mellitus
+10754881000119104,Diabetes mellitus in mother complicating childbirth
+10753491000119101,Gestational diabetes mellitus during intrapartum period
+164971000119101,Type 2 diabetes mellitus controlled by diet
+106281000119103,Pre-existing diabetes mellitus in mother complicating childbirth
+105401000119101,Diabetes mellitus due to pancreatic injury
+40801000119106,Gestational diabetes mellitus complicating pregnancy
+40791000119105,Postpartum gestational diabetes mellitus
+31321000119102,Diabetes mellitus type 1 without retinopathy
+1481000119100,Diabetes mellitus type 2 without retinopathy
+1416440007,Monogenic diabetes
+1367802006,Diabetes mellitus due to chronic pancreatitis
+1303868000,Intermediate DEND syndrome
+1285519007,Wolfram syndrome type 2
+1285518004,Wolfram syndrome type 1
+1255271005,"Type 1 diabetes mellitus, central and peripheral neurodegeneration syndrome"
+1217068008,Fulminant type 1 diabetes mellitus
+1197592001,"Intrauterine growth restriction, short stature, early adult-onset diabetes syndrome"
+1142044000,Pre-existing malnutrition-related diabetes mellitus in pregnancy
+890171006,Ketosis-prone diabetes mellitus
+870528001,Newly diagnosed type 1 diabetes mellitus
+816067005,Woodhouse Sakati syndrome
+783722008,Myopathy and diabetes mellitus
+782825008,"Primary microcephaly, epilepsy, permanent neonatal diabetes syndrome"
+782755007,"Primary microcephaly, mild intellectual disability, young-onset diabetes syndrome"
+737212004,Diabetes mellitus caused by chemical
+734022008,Wolfram-like syndrome
+733072002,Stimmler syndrome
+724067006,Permanent neonatal diabetes mellitus with cerebellar agenesis syndrome
+722454003,"Intellectual disability, craniofacial dysmorphism, hypogonadism, diabetes mellitus syndrome"
+722206009,"Pancreatic hypoplasia, diabetes mellitus, congenital heart disease syndrome"
+721088003,DEND syndrome
+720519003,"Atherosclerosis, deafness, diabetes, epilepsy, nephropathy syndrome"
+716362006,Gingival disease co-occurrent with diabetes mellitus
+709147009,Gingivitis co-occurrent with diabetes mellitus
+703138006,Type 2 diabetes mellitus in remission
+703137001,Type 1 diabetes mellitus in remission
+703136005,Diabetes mellitus in remission
+609581006,"Diabetes mellitus, transient neonatal 3"
+609580007,"Diabetes mellitus, transient neonatal 2"
+609579009,"Diabetes mellitus, transient neonatal 1"
+609578001,"Maturity-onset diabetes of the young, type 11"
+609577006,"Maturity-onset diabetes of the young, type 10"
+609576002,"Maturity-onset diabetes of the young, type 9"
+609575003,"Maturity-onset diabetes of the young, type 8"
+609574004,"Maturity-onset diabetes of the young, type 7"
+609573005,"Maturity-onset diabetes of the young, type 6"
+609572000,"Maturity-onset diabetes of the young, type 5"
+609571007,"Maturity-onset diabetes of the young, type 4"
+609570008,"Maturity-onset diabetes of the young, type 3"
+609569007,Diabetes mellitus due to genetic defect in insulin action
+609567009,Pre-existing type 2 diabetes mellitus in pregnancy
+609566000,Pregnancy and type 1 diabetes mellitus
+609565001,Permanent neonatal diabetes mellitus
+609564002,Pre-existing type 1 diabetes mellitus in pregnancy
+609563008,Pre-existing diabetes mellitus in pregnancy
+609562003,"Maturity onset diabetes of the young, type 1"
+609561005,Maturity-onset diabetes of the young
+472699005,Uncontrolled gestational diabetes mellitus
+445353002,Brittle type 2 diabetes mellitus
+445260006,Posttransplant diabetes mellitus
+444110003,Well controlled type 2 diabetes mellitus
+444074000,Well controlled type 1 diabetes mellitus
+444073006,Uncontrolled type 1 diabetes mellitus
+443694000,Uncontrolled type 2 diabetes mellitus
+427089005,Diabetes mellitus due to cystic fibrosis
+426875007,Latent autoimmune diabetes mellitus in adult
+408540003,Diabetes mellitus induced by non-steroid drugs
+405749004,Newly diagnosed diabetes
+359642000,Type 2 diabetes mellitus in nonobese
+290002008,Brittle type 1 diabetes mellitus
+276560009,Diabetes mellitus in neonate small for gestational age
+237652003,Insulin resistance - type B
+237651005,Insulin resistance - type A
+237627000,Pregnancy and type 2 diabetes mellitus
+237619009,Maternally inherited diabetes and deafness
+237617006,"Megaloblastic anemia, thiamine-responsive, with diabetes mellitus and sensorineural deafness"
+237612000,"Photomyoclonus, diabetes mellitus, deafness, nephropathy and cerebral dysfunction"
+237611007,"Muscular atrophy, ataxia, retinitis pigmentosa, and diabetes mellitus"
+237604008,"Maturity onset diabetes of the young, type 2"
+237603002,Transient neonatal diabetes mellitus
+237601000,Secondary endocrine diabetes mellitus
+237600004,Malnutrition-related diabetes mellitus - fibrocalculous
+237599002,Insulin treated type 2 diabetes mellitus
+199231005,Pre-existing malnutrition-related diabetes mellitus
+199230006,Pre-existing type 2 diabetes mellitus
+199229001,Pre-existing type 1 diabetes mellitus
+199223000,Maternal diabetes mellitus during antenatal and/or intrapartum and/or postpartum period
+190447002,Steroid-induced diabetes
+190389009,Type 2 diabetes mellitus with ulcer
+190372001,Type 1 diabetes mellitus maturity onset
+190368000,Type 1 diabetes mellitus with ulcer
+127012008,Lipoatrophic diabetes
+123763000,Houssay's syndrome
+111307005,Leprechaunism syndrome
+91352004,Diabetes mellitus due to structurally abnormal insulin
+81531005,Type 2 diabetes mellitus in obese
+75524006,Malnutrition related diabetes mellitus
+75022004,Gestational diabetes mellitus class A1
+70694009,Wolfram syndrome
+57886004,Protein-deficient diabetes mellitus
+51002006,Diabetes mellitus associated with pancreatic disease
+49817004,Neonatal diabetes mellitus
+46894009,Gestational diabetes mellitus class A2
+42954008,Diabetes mellitus associated with receptor abnormality
+33559001,Rabson-Mendenhall syndrome
+28032008,Insulin dependent diabetes mellitus type 1B
+24203005,"Extreme insulin resistance with acanthosis nigricans, hirsutism AND abnormal insulin receptors"
+23045005,Insulin dependent diabetes mellitus type 1A
+11687002,Gestational diabetes mellitus
+11530004,Brittle diabetes mellitus
+8801005,Secondary diabetes mellitus
+5969009,Diabetes mellitus associated with genetic syndrome
+5368009,Drug-induced diabetes mellitus
+2751001,Fibrocalculous pancreatic diabetes

@@ -1,0 +1,12 @@
+START,STOP,PATIENT,PAYER,ENCOUNTER,CODE,DESCRIPTION,REASONCODE,REASONDESCRIPTION
+2020-01-01T09:00:00Z,,p1,x,e1,860975,24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet,44054006,Diabetes mellitus type 2 (disorder)
+2018-01-01T09:00:00Z,2019-01-01T09:00:00Z,p1,x,e1,314076,lisinopril 10 MG Oral Tablet,59621000,Essential hypertension (disorder)
+2019-01-01T09:00:00Z,,p1,x,e1,314076,lisinopril 10 MG Oral Tablet,59621000,Essential hypertension (disorder)
+2018-01-01T09:00:00Z,,p1,x,e1,259255,atorvastatin 80 MG Oral Tablet,55822004,Hyperlipidemia (disorder)
+2022-01-01T09:00:00Z,,p2,x,e6,860975,24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet,714628002,Prediabetes (finding)
+2023-05-05T09:00:00Z,,p2,x,e6,313782,Acetaminophen 325 MG Oral Tablet,,
+2010-01-01T09:00:00Z,,p3,x,e9,865098,Insulin Lispro 100 UNT/ML Injectable Solution [Humalog],427089005,Diabetes mellitus due to cystic fibrosis (disorder)
+2012-01-01T09:00:00Z,,p3,x,e9,243670,aspirin 81 MG Oral Tablet,,
+2015-01-01T09:00:00Z,,p5,x,,308182,Amoxicillin 250 MG Oral Capsule,,
+2016-01-01T09:00:00Z,,p5,x,,197806,Ibuprofen 200 MG Oral Tablet,,
+2017-01-01T09:00:00Z,,p5,x,,308182,Amoxicillin 250 MG Oral Capsule,,

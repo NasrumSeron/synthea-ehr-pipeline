@@ -1,0 +1,11 @@
+START,STOP,PATIENT,ENCOUNTER,SYSTEM,CODE,DESCRIPTION
+2020-01-01,,p1,e1,SNOMED-CT,44054006,Diabetes mellitus type 2 (disorder)
+2018-01-01,,p1,e1,SNOMED-CT,59621000,Essential hypertension (disorder)
+2018-01-01,,p1,e1,SNOMED-CT,55822004,Hyperlipidemia (disorder)
+2022-01-01,,p2,e6,SNOMED-CT,714628002,Prediabetes (finding)
+2022-01-01,,p2,e6,SNOMED-CT,13644009,Hypercholesterolemia (disorder)
+2010-01-01,,p3,e9,SNOMED-CT,427089005,Diabetes mellitus due to cystic fibrosis (disorder)
+2012-01-01,,p3,e9,SNOMED-CT,59621000,Essential hypertension (disorder)
+2012-01-01,,p3,e9,SNOMED-CT,59621000,Essential hypertension (disorder)
+2023-01-01,,p4,e11,SNOMED-CT,127013003,Disorder of kidney due to diabetes mellitus (disorder)
+2023-01-01,,p4,e11,SNOMED-CT,302870006,Hypertriglyceridemia (disorder)

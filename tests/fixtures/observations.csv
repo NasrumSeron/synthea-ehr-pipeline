@@ -1,0 +1,18 @@
+DATE,PATIENT,ENCOUNTER,CATEGORY,CODE,DESCRIPTION,VALUE,UNITS,TYPE
+2024-01-01T09:00:00Z,p1,e1,vital-signs,39156-5,Body mass index (BMI) [Ratio],30.0,kg/m2,numeric
+2025-01-01T09:00:00Z,p1,e3,vital-signs,39156-5,Body mass index (BMI) [Ratio],32.5,kg/m2,numeric
+2025-01-01T09:00:00Z,p1,e3,vital-signs,8480-6,Systolic Blood Pressure,140,mm[Hg],numeric
+2025-01-01T09:00:00Z,p1,e3,vital-signs,8462-4,Diastolic Blood Pressure,90,mm[Hg],numeric
+2025-01-01T09:00:00Z,p1,e3,laboratory,2339-0,Glucose [Mass/volume] in Blood,200,mg/dL,numeric
+2025-01-01T09:00:00Z,p1,e3,laboratory,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood,8.1,%,numeric
+2023-05-05T09:00:00Z,p2,e6,vital-signs,39156-5,Body mass index (BMI) [Ratio],25.0,kg/m2,numeric
+2023-05-05T09:10:00Z,p2,e6,vital-signs,39156-5,Body mass index (BMI) [Ratio],27.0,kg/m2,numeric
+2022-01-01T09:00:00Z,p2,e6,vital-signs,8480-6,Systolic Blood Pressure,118,mm[Hg],numeric
+2023-05-05T09:00:00Z,p2,e6,vital-signs,8480-6,Systolic Blood Pressure,120,mm[Hg],numeric
+2023-05-05T09:00:00Z,p2,e6,vital-signs,8462-4,Diastolic Blood Pressure,80,mm[Hg],numeric
+2019-02-02T09:00:00Z,p3,e9,vital-signs,39156-5,Body mass index (BMI) [Ratio],22.0,kg/m2,numeric
+2019-09-09T09:00:00Z,p3,e10,vital-signs,39156-5,Body mass index (BMI) [Ratio],not recorded,kg/m2,text
+2019-02-02T09:00:00Z,p3,e9,vital-signs,8480-6,Systolic Blood Pressure,130,mm[Hg],numeric
+2019-02-02T09:00:00Z,p3,e9,vital-signs,8462-4,Diastolic Blood Pressure,85,mm[Hg],numeric
+2024-02-02T09:00:00Z,p4,e11,vital-signs,8480-6,Systolic Blood Pressure,110,mm[Hg],numeric
+2024-02-02T09:00:00Z,p4,e11,vital-signs,8462-4,Diastolic Blood Pressure,70,mm[Hg],numeric
